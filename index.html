@@ -21,16 +21,26 @@
         Log in and get to work <br />
         <span style="color: red" id="errorL"></span>
       </h2>
-      <span></span>
-        <div class="wrapper" ">
+      <span style="display: inline-block">
+        <div class="wrapper">
           <div class="col-right">
             <div class="login-form">
               <form>
                 <p>
-                  <input type="text" placeholder="Username" required />
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    required
+                    id="authEmail"
+                  />
                 </p>
                 <p>
-                  <input type="password" placeholder="Password" required />
+                  <input
+                    type="password"
+                    placeholder="Password"
+                    id="authPass"
+                    required
+                  />
                 </p>
                 <p>
                   <input
@@ -50,6 +60,7 @@
         </div></span
       >
     </div>
+    <!-- main -->
     <div>
       <div
         id="main-details"

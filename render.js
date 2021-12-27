@@ -286,32 +286,56 @@ async function callback(error, response, body) {
   }
 }
 
-const btn = document.querySelector("span#start-auth");
-btn.addEventListener("click", () => {
+const btn = document.querySelector("#start-auth");
+btn.addEventListener("click", (e) => {
+  e.preventDefault();
   document.getElementById("errorL").innerHTML = "";
-  btn.setAttribute("disabled", true);
-  iioauth2Client = new ElectronGoogleOAuth2(
-    gDetails.id,
-    gDetails.sd,
-    gDetails.scope,
-    {
-      successRedirectURL: "http://kcss.in",
-      loopbackInterfaceRedirectionPort: 42813,
-      refocusAfterSuccess: true,
-    }
-  );
-
-  iioauth2Client.openAuthWindowAndGetTokens().then(async (token) => {
-    ctoken = token;
-    oAuth2Client1.setCredentials(token);
-    options.method = "GET";
-    options.url = "https://www.googleapis.com/oauth2/v1/userinfo?alt=json";
-    options.headers = {
-      Authorization: "Bearer " + token.access_token,
-    };
-    request(options, callback);
-  });
+  const email = document.getElementById("authEmail").value;
+  const password = document.getElementById("authPass").value;
+  axios
+    .post("http://localhost:9000/login", { email, password })
+    .then((res) => {
+      console.log("login data", res);
+      if (res.data.status === "success") {
+        reqHeaders["Authorization"] = "Bearer " + res.data.token;
+        document.getElementById("login-details").style = "display:none";
+        document.getElementById("main-details").style =
+          "display: block; margin: 15px;margin-top: 0px;";
+        document.getElementById("footer").style = "display: block";
+      }
+      // else {
+      //   document.getElementById("errorL").innerHTML = res.message;
+      // }
+    })
+    .catch((err) => {
+      document.getElementById("errorL").innerHTML =
+        "You are not registered, Please contact Admin.";
+    });
 });
+
+// btn.setAttribute("disabled", true);
+// iioauth2Client = new ElectronGoogleOAuth2(
+//   gDetails.id,
+//   gDetails.sd,
+//   gDetails.scope,
+//   {
+//     successRedirectURL: "http://kcss.in",
+//     loopbackInterfaceRedirectionPort: 42813,
+//     refocusAfterSuccess: true,
+//   }
+// );
+
+// iioauth2Client.openAuthWindowAndGetTokens().then(async (token) => {
+//   ctoken = token;
+//   oAuth2Client1.setCredentials(token);
+//   options.method = "GET";
+//   options.url = "https://www.googleapis.com/oauth2/v1/userinfo?alt=json";
+//   options.headers = {
+//     Authorization: "Bearer " + token.access_token,
+//   };
+// request(options, callback);
+// });
+// });
 
 const videoElement = document.querySelector("video");
 
