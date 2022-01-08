@@ -1,1 +1,6 @@
 http://localhost:8000/
+
+
+Today : total time
+current selected project : curProject.name
+

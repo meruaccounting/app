@@ -103,6 +103,10 @@
           </div>
         </div>
         <br />
+        <div style="" class="display-6">Today Total :</div>
+        <div style="" class="display-7">Week :</div>
+        <div style="" class="display-7">Month :</div>
+        <br />
         <div class="row">
           <div class="col" style="text-align: left; color: green">
             Contract
@@ -416,6 +420,7 @@
             <div
               onclick="refreshProjects();document.getElementById('task-details').style='display: none;';document.getElementById('main-details').style='display: block; margin: 15px;margin-top: 0px;';"
               class="col-1"
+              style="display: none"
             >
               <h1 style="padding-top: 10px; color: green; cursor: pointer">
                 <
@@ -452,7 +457,7 @@
                   onclick="handleCapture(this)"
                   type="checkbox"
                 />
-                <span class="slider round"></span>
+                <span id="switch" class="slider round"></span>
               </label>
               <span
                 style="display: block; font-size: 12px"

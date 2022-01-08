@@ -1,24 +1,60 @@
-const { desktopCapturer, remote, app } = require("electron");
-const ElectronGoogleOAuth2 =
-  require("@getstation/electron-google-oauth2").default;
-var request = require("request");
+const { desktopCapturer, remote, app, ipcRenderer } = require("electron");
 const axios = require("axios");
 const { writeFile } = require("fs");
-const sql = require("mssql");
-const { google } = require("googleapis");
+const mergeImg = require("merge-img");
+const Jimp = require("jimp");
 
-google.options({ adapter: require("axios/lib/adapters/http") });
+// idle
+let totalIdleTime = 0;
+let currSsIdleTime = 0;
+let currActIdleTime = 0;
+ipcRenderer.on("idle:true", (e, idleTime) => {
+  // console.log(idleTime);
+  if (idleTime > 1000 * 300) {
+    console.log("stop the recording here");
+  }
+  currActIdleTime = currActIdleTime + 1;
+  currSsIdleTime = currSsIdleTime + 1;
+  totalIdleTime = totalIdleTime + 1;
+});
+
 const fs = require("fs");
-// is this base url?
-let ep = "https://ie.kcss.in/api/";
+// let ep = "https://ie.kcss.in/api/";
+let ep = "http://localhost:8000/";
+let currSsTimer = 0;
 let curUserID = 0;
 let curProjectID = 0;
 let curClientId = 0;
 let curTaskID = 0;
-let curSubTaskID = 0;
-let userProjects = [];
-let userClients = [];
-let userClientsD = {};
+let curProjectS;
+let curProjectIDS;
+let curClientIdS;
+// let curSubTaskID = 0;
+let userProjects = [
+  {
+    _id: 1,
+    name: "pro1",
+    clientId: "1c",
+    clientName: "c1",
+    consumetime: 300,
+  },
+  {
+    _id: 2,
+    name: "pro2",
+    clientId: "2c",
+    clientName: "c2",
+    consumetime: 100,
+  },
+  {
+    _id: 3,
+    name: "pro3",
+    clientId: "3c",
+    clientName: "c3",
+    consumetime: 6600,
+  },
+];
+// let userClients = [];
+// let userClientsD = {};
 let curActivity = new Date().getTime();
 let curActivityId = "";
 let performanceData = 100;
@@ -36,38 +72,9 @@ let daysFull = [
   "Saturday",
 ];
 let daysSort = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const config = {
-  user: "SSM",
-  password: "SSM@12345",
-  server: "198.71.225.146",
-  database: "ScreenShotMonitor",
-};
-let iioauth2Client;
 
-let sstime = 600000;
+let sstime = 120000;
 let apause = 5;
-
-async function qry(q) {
-  let result1 = {};
-  try {
-    let pool = await sql.connect(config);
-    result1 = await pool.request().query(q);
-  } catch (err) {}
-  return result1;
-}
-
-async function qryIns(q, a = new Date(), b = new Date()) {
-  let result1 = {};
-  try {
-    let pool = await sql.connect(config);
-    result1 = await pool
-      .request()
-      .input("p1", sql.DateTime, a)
-      .input("p2", sql.DateTime, b)
-      .query(q);
-  } catch (err) {}
-  return result1;
-}
 
 const { dialog, Menu } = remote;
 let lastCaptured = "";
@@ -76,106 +83,97 @@ let timmer = 0;
 let intVaal = 0;
 let intCapt = 0;
 
-const gDetails = {
-  id: "121350216032-gkma8l391sdb2ia9aqd99it2thdsherb.apps.googleusercontent.com",
-  sd: "GhCC0Ncgnm-vxq1FffzeVk0s",
-  scope: [
-    "https://www.googleapis.com/auth/userinfo.email",
-    "https://www.googleapis.com/auth/userinfo.profile",
-    "https://www.googleapis.com/auth/drive",
-  ],
-  cb: "http://127.0.0.1:42813/callback",
-};
-let ctoken = {};
-let reqToken = "";
 reqHeaders = {
   Authorization: "Bearer ",
 };
 
-const oAuth2Client1 = new google.auth.OAuth2({
-  clientId: gDetails.id,
-});
-
-const googleDrive = google.drive({
-  version: "v3",
-  auth: oAuth2Client1,
-});
-
 let mediaRecorder;
 const recordedChunks = [];
 
-var options = {
-  method: "GET",
-  json: true,
-  url: "https://www.googleapis.com/oauth2/v1/userinfo?alt=json",
-  headers: {
-    Authorization: "Bearer xxxx",
-  },
-};
-
 // get projects. change this to our api
-function callProjects(q) {
-  axios
-    .post(ep + "kcs/list/smproject", q, { headers: reqHeaders })
-    .then((resP) => {
-      userProjects = resP.data;
-      renderProjects();
-    });
+function callProjects() {
+  // axios
+  //   .post("http://localhost:8000/getprojects", q, { headers: reqHeaders })
+  //   .then((resP) => {
+  //     userProjects = resP.data;
+  //     renderProjects();
+  //   });
+  console.log("projectsLoaded");
+  renderProjects();
 }
+let recording = true;
 
 // onclick select projects?
 async function selectProject(idx) {
+  if (
+    document.querySelector("#handleCheckbox").checked &&
+    curProject !== userProjects[idx]
+  ) {
+    if (
+      confirm(
+        "Are you sure you want to change the project? This will stop the current Project timer"
+      )
+    ) {
+      document.querySelector("#handleCheckbox").click();
+    } else {
+      return;
+    }
+  }
   curProject = userProjects[idx];
   curProjectID = userProjects[idx]["_id"];
   curClientId = userProjects[idx]["client"];
-  axios
-    .post(
-      ep + "kcs/list/smtasks",
-      { project: curProjectID, status: "active" },
-      { headers: reqHeaders }
-    )
-    .then((resP) => {
-      let hc = "";
-      for (let i = 0; i < resP.data.length; i++) {
-        if (i == 0) {
-          hc =
-            hc +
-            "<option value='" +
-            resP.data[i]["_id"] +
-            "' selected>" +
-            resP.data[i]["name"] +
-            "</option>";
-        } else {
-          hc =
-            hc +
-            "<option value='" +
-            resP.data[i]["_id"] +
-            "' >" +
-            resP.data[i]["name"] +
-            "</option>";
-        }
-      }
-      if (resP.data.length == 0) {
-        hc = hc + "<option value='0' selected>No Tasks!</option>";
-      }
-      // render the name of the selected task
-      document.getElementById("selectTask").innerHTML = hc;
+  // curProject = userProjects[idx];
+  // curProjectID = userProjects[idx]["_id"];
+  // curClientId = userProjects[idx]["client"];
+  // send a req to show current active project
+  // axios
+  //   .post(
+  //     ep + "kcs/list/smtasks",
+  //     { project: curProjectID, status: "active" },
+  //     { headers: reqHeaders }
+  //   )
+  //   .then((resP) => {
+  // let hc = "";
+  // for (let i = 0; i < resP.data.length; i++) {
+  //   if (i == 0) {
+  //     hc =
+  //       hc +
+  //       "<option value='" +
+  //       resP.data[i]["_id"] +
+  //       "' selected>" +
+  //       resP.data[i]["name"] +
+  //       "</option>";
+  //   } else {
+  //     hc =
+  //       hc +
+  //       "<option value='" +
+  //       resP.data[i]["_id"] +
+  //       "' >" +
+  //       resP.data[i]["name"] +
+  //       "</option>";
+  //   }
+  // }
+  // if (resP.data.length == 0) {
+  //   hc = hc + "<option value='0' selected>No Tasks!</option>";
+  // }
+  // render the name of the selected task
+  // document.getElementById("selectTask").innerHTML = hc;
 
-      const tm = secondsToHms(curProject.consumetime, "h:mm");
-      document.getElementById("hProjectName").innerHTML = curProject.name;
-      document.getElementById("hClientName").innerHTML =
-        userClientsD[curProject.client]["name"];
-      document.getElementById("hProjectDesc").innerHTML =
-        curProject.description;
-      document.getElementById("hDayOfWeek").innerHTML =
-        daysSort[new Date().getDay()];
-      document.getElementById("hConsumeTime").innerHTML = tm + " hrs";
-      document.getElementById("hOutOfTime").innerHTML =
-        tm + " of " + curProject.hours + " hrs";
-      document.getElementById("timId").innerHTML = secondsToHms(
-        curProject.consumetime
-      );
-    });
+  const tm = secondsToHms(curProject.consumetime, "h:mm");
+  document.getElementById("hProjectName").innerHTML = curProject.name;
+  document.getElementById("hClientName").innerHTML = curProject.clientName;
+  // userClientsD[curProject.client]["name"];
+  document.getElementById("hProjectDesc").innerHTML = curProject.description;
+  document.getElementById("hDayOfWeek").innerHTML =
+    daysSort[new Date().getDay()];
+  document.getElementById("hConsumeTime").innerHTML = tm + " hrs";
+  document.getElementById("hOutOfTime").innerHTML =
+    tm + " of " + curProject.hours + " hrs";
+  document.getElementById("timId").innerHTML = secondsToHms(
+    curProject.consumetime
+  );
+
+  // });
 }
 
 async function searchProjects(t) {
@@ -208,13 +206,16 @@ function renderProjects() {
       hc +
       '<div onclick="selectProject(' +
       i +
-      ");document.getElementById('task-details').style='display: block;';document.getElementById('main-details').style='display: none;';\" class=\"col-7\" style=\"text-align: left; cursor: pointer;\">";
+      ');" class="col-7" style="text-align: left; cursor: pointer;">';
+    // i +
+    // ");document.getElementById('task-details').style='display: block;';document.getElementById('main-details').style='display: none;';\" class=\"col-7\" style=\"text-align: left; cursor: pointer;\">";
     hc =
       hc + '<h5 style="color: green; margin-bottom: 0px;">' + p.name + "</h5>";
     hc =
       hc +
       '<span style="font-size: 12px;">' +
-      userClientsD[p.client]["name"] +
+      p.clientName +
+      // userClientsD[p.client]["name"] +
       ", " +
       p.description +
       "</span>";
@@ -245,47 +246,50 @@ function renderProjects() {
   document.getElementById("allprojectsv").innerHTML = hc;
 }
 
-async function callback(error, response, body) {
-  if (!error && response.statusCode == 200) {
-    userData["gmail"] = body;
-    axios.post(ep + "glogin", { password: ctoken.access_token }).then((res) => {
-      if (res && res.data && res.data.token) {
-        reqToken = res.data.token;
-        reqHeaders["Authorization"] = "Bearer " + res.data.token;
-        userData["server"] = res.data.server;
-        curUserID = res.data.server._id;
+// --- combined into login button ----------
+// async function callback(error, response, body) {
+//   if (!error && response.statusCode == 200) {
+//     userData["gmail"] = body;
+//     axios.post(ep + "glogin", { password: ctoken.access_token }).then((res) => {
+//       if (res && res.data && res.data.token) {
+//         reqToken = res.data.token;
+//         reqHeaders["Authorization"] = "Bearer " + res.data.token;
+//         userData["server"] = res.data.server;
+//         curUserID = res.data.server._id;
+//         // settings variable
+//         axios
+//           .post(ep + "kcs/list/smemployees", { uid: curUserID })
+//           .then((resEE) => {
+//             if (resEE && resEE.data && resEE.data.length > 0) {
+//               userData["settings"] = resEE.data[0];
+//               apause = resEE.data[0]["autopause"];
+//               sstime = resEE.data[0]["imagerate"] * 60000;
+//             }
+//           });
+//         axios
+//           .post(ep + "kcs/list/smclient", {}, { headers: reqHeaders })
+//           .then((resC) => {
+//             userClients = resC.data;
+//             for (let m = 0; m < resC.data.length; m++) {
+//               userClientsD[resC.data[m]["_id"]] = resC.data[m];
+//             }
+//             // get projects
+//             callProjects({ employees: curUserID, status: "active" });
+//             document.getElementById("login-details").style = "display:none";
+//             document.getElementById("main-details").style =
+//               "display: block; margin: 15px;margin-top: 0px;";
+//             document.getElementById("footer").style = "display: block";
+//             document.getElementById("user-name").innerHTML = body.name;
+//           });
+//       }
+//     });
+//   } else {
+//     document.getElementById("errorL").innerHTML =
+//       "You are not registered, Please contact Admin.";
+//   }
+// }
 
-        axios
-          .post(ep + "kcs/list/smemployees", { uid: curUserID })
-          .then((resEE) => {
-            if (resEE && resEE.data && resEE.data.length > 0) {
-              userData["settings"] = resEE.data[0];
-              apause = resEE.data[0]["autopause"];
-              sstime = resEE.data[0]["imagerate"] * 60000;
-            }
-          });
-        axios
-          .post(ep + "kcs/list/smclient", {}, { headers: reqHeaders })
-          .then((resC) => {
-            userClients = resC.data;
-            for (let m = 0; m < resC.data.length; m++) {
-              userClientsD[resC.data[m]["_id"]] = resC.data[m];
-            }
-            callProjects({ employees: curUserID, status: "active" });
-            document.getElementById("login-details").style = "display:none";
-            document.getElementById("main-details").style =
-              "display: block; margin: 15px;margin-top: 0px;";
-            document.getElementById("footer").style = "display: block";
-            document.getElementById("user-name").innerHTML = body.name;
-          });
-      }
-    });
-  } else {
-    document.getElementById("errorL").innerHTML =
-      "You are not registered, Please contact Admin.";
-  }
-}
-
+// LOGIN ////////////////////////////////////////////////////////////////
 const btn = document.querySelector("#start-auth");
 btn.addEventListener("click", (e) => {
   e.preventDefault();
@@ -293,19 +297,24 @@ btn.addEventListener("click", (e) => {
   const email = document.getElementById("authEmail").value;
   const password = document.getElementById("authPass").value;
   axios
-    .post("http://localhost:9000/login", { email, password })
+    .post("http://localhost:8000/login", { email, password })
     .then((res) => {
       console.log("login data", res);
       if (res.data.status === "success") {
+        // reqToken = res.data.token;
+        // userData["server"] = res.data.server;
+        // curUserID = res.userData._id;
         reqHeaders["Authorization"] = "Bearer " + res.data.token;
         document.getElementById("login-details").style = "display:none";
         document.getElementById("main-details").style =
           "display: block; margin: 15px;margin-top: 0px;";
         document.getElementById("footer").style = "display: block";
+        document.getElementById("user-name").innerHTML =
+          res.data.user.firstName;
+        document.getElementById("task-details").style = "display: block";
       }
-      // else {
-      //   document.getElementById("errorL").innerHTML = res.message;
-      // }
+      callProjects();
+      selectProject(0);
     })
     .catch((err) => {
       document.getElementById("errorL").innerHTML =
@@ -347,13 +356,13 @@ startBtn.onclick = (e) => {
 };
 
 const stopBtn = document.getElementById("stopBtn");
-
 stopBtn.onclick = (e) => {
   mediaRecorder.stop();
   startBtn.classList.remove("is-danger");
   startBtn.innerText = "Start";
 };
 
+// not used idk why
 async function doScreens() {
   const inputSources = await desktopCapturer.getSources({
     types: ["screen", "window"],
@@ -367,64 +376,127 @@ async function doCapture(d) {
     types: ["screen"],
     thumbnailSize: { width: 1024, height: 768 },
   });
+  console.log(inputSources);
 
   const inputSourcesWin = await desktopCapturer.getSources({
     types: ["window"],
     thumbnailSize: { width: 1024, height: 768 },
   });
+  console.log(inputSourcesWin);
+  // title
   let title = "None";
   if (inputSourcesWin && inputSourcesWin.length > 0) {
     title = inputSourcesWin[0]["name"];
   }
-
-  for (let i = 0; i < inputSources.length; i++) {
-    const fileName = makeid(10) + "-" + new Date().getTime() + ".png";
-    const filePath = "./images/captured/" + fileName;
-    const ffile = new File([inputSources[i].thumbnail.toPNG()], "foo.png", {
-      type: "image/png",
+  // //////MERGE///////////// //
+  // buffers to pass to mergeImg
+  let images = [];
+  // to use in new File
+  let buffer;
+  if (inputSources.length == 1) {
+    for (let i = 0; i < inputSources.length; i++) {
+      images.push(inputSources[i].thumbnail.toPNG());
+    }
+    mergeImg(images).then((image) => {
+      // convertingg iamge jimp object to img buff to pass into new File
+      image.write("dual.png", () => {
+        console.log("done");
+      });
+      // its asunc, fix it, make it sync
+      image.getBuffer(Jimp.MIME_PNG, (err, buff) => {
+        console.log(buff);
+      });
     });
-    var formData = new FormData();
-    formData.append("file", ffile);
-    const newHed = { "Content-Type": "multipart/form-data" };
-    axios.post(ep + "uploadile", formData, { headers: newHed }).then((resP) => {
-      if (d) {
-        const actData = {
-          file: resP.data,
-          employee: curUserID,
-          project: curProjectID,
-          task: curTaskID,
-          image: resP.data.filename,
-          activityat: new Date(),
-          activity: curActivity,
-          activityid: curActivityId,
-          performanceData: performanceData,
-          title: title,
-        };
-        axios
-          .post(ep + "kcs/smactivityimage", actData, { headers: reqHeaders })
-          .then((resPK) => {});
-        const actDataAct = {
-          endTime: new Date(),
-          consumetime: parseInt(curProject.consumetimeCur),
-          performanceData: avgPerformance,
-        };
-        axios
-          .put(ep + "kcs/smactivity/" + curActivityId, actDataAct, {
-            headers: reqHeaders,
-          })
-          .then((resPK) => {
-            performanceData = 100;
-            avgPerformance = 100;
-          });
-      }
-    });
-    writeFile(filePath, inputSources[i].thumbnail.toPNG(), () => {});
-    const img = {
-      dataURL: inputSources[i].thumbnail.toDataURL(),
-      path: filePath,
-    };
-    photos.push(img);
+  } else {
+    buffer = inputSources[0].thumbnail.toPNG();
   }
+  const fileName = makeid(10) + "-" + new Date().getTime() + ".png";
+  const filePath = "./images/captured/" + fileName;
+  const ffile = new File([buffer], "foo.png", {
+    type: "image/png",
+  });
+  var formData = new FormData();
+  formData.append("image", ffile);
+  const newHed = { "Content-Type": "multipart/form-data" };
+  // upload the ss and then upload the details of the img.
+  axios.post(ep + "upload", formData, { headers: newHed }).then((resP) => {
+    console.log(resP);
+    // img details uploaded only when true is passed which is passed during the interval and ending the act.
+    if (d) {
+      const actData = {
+        // project: curProjectID,
+        // task: curTaskID,
+        image: resP.data.path,
+        activityAt: new Date().getTime(),
+        // activity: curActivity,
+        activityId: curActivityId,
+        performanceData: 100 - (currSsIdleTime / currSsTimer) * 100,
+        title: title,
+      };
+      axios
+        .post(ep + "activity/screenshot", actData, {
+          headers: reqHeaders,
+        })
+        .then((resPK) => {});
+      // update activity data on every screenshot
+      const actDataAct = {
+        endTime: new Date().getTime(),
+        consumeTime: curProject.consumetimeCur,
+        performanceData:
+          100 - (currActIdleTime / curProject.consumetimeCur) * 100,
+      };
+      axios
+        .patch(ep + `activity/${curActivityId}`, actDataAct, {
+          headers: reqHeaders,
+        })
+        .then((resPK) => {
+          console.log(resPK);
+          performanceData = 100;
+          avgPerformance = 100;
+          currSsIdleTime = 0;
+          currSsTimer = 0;
+        });
+    }
+  });
+  ////////////////////////////////////////////////////////////copy
+  // axios.post(ep + "uploadile", formData, { headers: newHed }).then((resP) => {
+  //   if (d) {
+  //     const actData = {
+  //       file: resP.data,
+  //       employee: curUserID,
+  //       project: curProjectID,
+  //       task: curTaskID,
+  //       image: resP.data.filename,
+  //       activityat: new Date(),
+  //       activity: curActivity,
+  //       activityid: curActivityId,
+  //       performanceData: performanceData,
+  //       title: title,
+  //     };
+  //     axios
+  //       .post(ep + "kcs/smactivityimage", actData, { headers: reqHeaders })
+  //       .then((resPK) => {});
+  //     const actDataAct = {
+  //       endTime: new Date(),
+  //       consumetime: parseInt(curProject.consumetimeCur),
+  //       performanceData: avgPerformance,
+  //     };
+  //     axios
+  //       .put(ep + "kcs/smactivity/" + curActivityId, actDataAct, {
+  //         headers: reqHeaders,
+  //       })
+  //       .then((resPK) => {
+  //         performanceData = 100;
+  //         avgPerformance = 100;
+  //       });
+  //   }
+  // });
+  writeFile(filePath, buffer, () => {});
+  const img = {
+    dataURL: inputSources[0].thumbnail.toDataURL(),
+    path: filePath,
+  };
+  photos.push(img);
   return photos;
 }
 
@@ -442,66 +514,105 @@ async function setLastImage(d) {
 }
 
 async function handleCapture(t) {
+  ipcRenderer.send("idle:start");
   curTaskID = document.getElementById("selectTask").value;
   if (t.checked) {
+    currActIdleTime = 0;
+    // just a name, not id
     curActivity = makeid(10) + "-" + new Date().getTime();
-    createFiles(iioauth2Client.oauth2Client);
+    // set last image false
     setLastImage(false);
+    // start the current timer from 0
     runTimmer(true, 0);
+    // run setlastimage on interval
     runCapture(true);
+    // reset the currentime of project
     curProject["consumetimeCur"] = 0;
+    // set the start Date of the project
     curProject["startD"] = new Date();
     const actData = {
-      client: curClientId,
-      employee: curUserID,
-      project: curProjectID,
-      task: curTaskID,
-      starttime: new Date(),
-      endTime: new Date(),
-      activityat: new Date(),
-      activity: curActivity,
+      // isInternal : false,
+      // client: curClientId,
+      // employee: curUserID,
+      // project: curProjectID,
+      // task: curTaskID,
+      startTime: new Date().getTime(),
+      endTime: new Date().getTime(),
+      // activity: curActivity,
       performanceData: 100,
     };
+    // update the activity and
+    // send req to make a new id and retrieve the id.
+    // initial performance is 100.
     axios
-      .post(ep + "kcs/smactivity", actData, { headers: reqHeaders })
+      .post(ep + "activity", actData, { headers: reqHeaders })
       .then((resPK) => {
-        curActivityId = resPK.data._id;
+        console.log(resPK.data.activity._id);
+        curActivityId = resPK.data.activity._id;
       });
 
     new Notification("Start Monitoring", {
       body: "Your " + "screenshot monitoring is started sucessfully;",
     });
+
+    // on stop the activity
   } else {
+    ipcRenderer.send("idle:stop");
+    // run setlastimage for one last time
     setLastImage(true);
+    // clear interval
     runTimmer(false, curProject.consumetime);
+    // stop the interval for setlastimage
     runCapture(false);
+    // set the stop date for the project
     curProject["stopD"] = new Date();
+    // update the total time of the project
     curProject.consumetime =
       parseInt(curProject.consumetimeCur) + parseInt(curProject.consumetime);
     const tm = secondsToHms(parseInt(curProject.consumetime), "h:mm");
     document.getElementById("hConsumeTime").innerHTML = tm + " hrs";
     document.getElementById("hOutOfTime").innerHTML =
       tm + " of " + curProject.hours + " hrs";
-
+    // update the end time of the activity and also the time consumed and performance
     const actData = {
-      endTime: new Date(),
-      consumetime: parseInt(curProject.consumetimeCur),
-      performanceData: avgPerformance,
+      endTime: new Date().getTime(),
+      consumeTime: curProject.consumetimeCur,
+      performanceData:
+        100 - (currActIdleTime / curProject.consumetimeCur) * 100,
     };
     axios
-      .put(ep + "kcs/smactivity/" + curActivityId, actData, {
+      .patch(ep + `activity/${curActivityId}`, actData, {
         headers: reqHeaders,
       })
-      .then((resPK) => {});
-    axios
-      .put(
-        ep + "kcs/smproject/" + curProjectID,
-        { consumetime: curProject.consumetime },
-        { headers: reqHeaders }
-      )
-      .then((resPK) => {});
+      .then((resPK) => {
+        console.log(resPK);
+      });
+    // make a new field in the project field in user, consume time
+    // update the consume time for the project
+    // axios
+    //   .put(
+    //     ep + "kcs/smproject/" + curProjectID,
+    //     { consumetime: curProject.consumetime },
+    //     { headers: reqHeaders }
+    //   )
+    //   .then((resPK) => {});
+    /////////////////////////////////////////
+    // axios
+    //   .put(ep + "kcs/smactivity/" + curActivityId, actData, {
+    //     headers: reqHeaders,
+    //   })
+    //   .then((resPK) => {});
+    // // make a new field in the project field in user, consume time
+    // // update the consume time for the project
+    // axios
+    //   .put(
+    //     ep + "kcs/smproject/" + curProjectID,
+    //     { consumetime: curProject.consumetime },
+    //     { headers: reqHeaders }
+    //   )
+    //   .then((resPK) => {});
     new Notification("Stop Monitoring", {
-      body: "Your screenshot monitoring is started sucessfully;",
+      body: "Your screenshot monitoring is stopped sucessfully;",
     });
   }
 }
@@ -511,6 +622,7 @@ function runTimmer(t, s) {
     intVaal = setInterval(() => {
       s++;
       curProject.consumetimeCur = curProject.consumetimeCur + 1;
+      currSsTimer = currSsTimer + 1;
       document.getElementById("timId").innerHTML = secondsToHms(s);
     }, 1000);
   } else {
@@ -642,25 +754,6 @@ function makeid(length) {
   return result;
 }
 
-function createFiles(auth) {
-  const drive = google.drive({ version: "v3", auth });
-  var fileMetadata = {
-    name: "photo.png",
-  };
-  var media = {
-    mimeType: "image/png",
-    body: fs.createReadStream("assets/images/loginGoogle.png"),
-  };
-  drive.files.create(
-    {
-      resource: fileMetadata,
-      media: media,
-      fields: "id",
-    },
-    function (err, file) {}
-  );
-}
-
 const dir = "./images/captured";
 if (!fs.existsSync(dir)) {
   fs.mkdirSync(dir, {
@@ -673,3 +766,4 @@ function eventHandler(event) {}
 function logout() {
   location.reload();
 }
+``;
