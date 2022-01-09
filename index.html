@@ -28,6 +28,7 @@
               <form>
                 <p>
                   <input
+                    value="ayushg@gmail.com"
                     type="email"
                     placeholder="Email"
                     required
@@ -36,6 +37,7 @@
                 </p>
                 <p>
                   <input
+                    value="123456"
                     type="password"
                     placeholder="Password"
                     id="authPass"
@@ -74,14 +76,25 @@
                 class="input-group-text"
                 id="inputGroupPrepend"
               >
-                &#x1F50D;
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  fill="currentColor"
+                  class="bi bi-search"
+                  viewBox="0 0 16 16"
+                >
+                  <path
+                    d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"
+                  />
+                </svg>
               </span>
               <input
                 onkeyup="searchProjects(this)"
                 style="border-left: none"
                 type="text"
                 class="form-control"
-                placeholder="Search Tasks"
+                placeholder="Search Projects"
                 id="searchbox"
                 aria-describedby="inputGroupPrepend"
                 required=""
@@ -411,7 +424,7 @@
       </div>
       <div
         id="task-details"
-        style="display: block"
+        style="display: none"
         class="container"
         class="row justify-content-md-center"
       >
@@ -420,7 +433,7 @@
             <div class="col-11" style="text-align: left">
               <h5
                 class="text-success"
-                style="margin-bottom: 0px"
+                style="margin-bottom: 0px; padding: 10px 0 2px 0"
                 id="hProjectName"
               >
                 Accountant Needed

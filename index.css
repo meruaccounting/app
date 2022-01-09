@@ -94,6 +94,12 @@ body {
   background: #eaeff4;
 }
 
+#task-details {
+  background-color: #e9fcd4;
+  text-decoration-color: #fff;
+  padding-left: 20px;
+}
+
 .wrapper {
   margin: 0 auto;
   width: 100%;
