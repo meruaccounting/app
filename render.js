@@ -457,6 +457,8 @@ async function doCapture(d) {
           currSsIdleTime = 0;
           currSsTimer = 0;
         });
+      // also send a req to update the project consume time as well
+      // for both projects, in user and also in projects schema
     }
   });
   ////////////////////////////////////////////////////////////copy
@@ -492,7 +494,9 @@ async function doCapture(d) {
   //       });
   //   }
   // });
-  writeFile(filePath, newBuff, () => {});
+  /////////////////////////////////////copy
+  // writeFile(filePath, newBuff, () => {});
+  // fix this, make this to take the last full ss
   const img = {
     dataURL: inputSources[0].thumbnail.toDataURL(),
     path: filePath,
