@@ -93,14 +93,11 @@ const recordedChunks = [];
 
 // get projects. change this to our api
 function callProjects() {
-  // axios
-  //   .post("http://localhost:8000/getprojects", q, { headers: reqHeaders })
-  //   .then((resP) => {
-  //     userProjects = resP.data;
-  //     renderProjects();
-  //   });
+  axios.get(ep + "project", { headers: reqHeaders }).then((resP) => {
+    userProjects = resP.data.data;
+    renderProjects();
+  });
   console.log("projectsLoaded");
-  renderProjects();
 }
 let recording = true;
 
@@ -121,8 +118,9 @@ async function selectProject(idx) {
     }
   }
   curProject = userProjects[idx];
-  curProjectID = userProjects[idx]["_id"];
-  curClientId = userProjects[idx]["client"];
+  // curProjectID = userProjects[idx]["_id"];
+  // curClientId = userProjects[idx]["client"];
+  ///////////////old...,..........
   // curProject = userProjects[idx];
   // curProjectID = userProjects[idx]["_id"];
   // curClientId = userProjects[idx]["client"];
@@ -212,14 +210,10 @@ function renderProjects() {
     // ");document.getElementById('task-details').style='display: block;';document.getElementById('main-details').style='display: none;';\" class=\"col-7\" style=\"text-align: left; cursor: pointer;\">";
     hc =
       hc + '<h5 style="color: green; margin-bottom: 0px;">' + p.name + "</h5>";
-    hc =
-      hc +
-      '<span style="font-size: 12px;">' +
-      p.clientName +
-      // userClientsD[p.client]["name"] +
-      ", " +
-      p.description +
-      "</span>";
+    hc = hc + '<span style="font-size: 12px;">' + p.client;
+    // p.clientName +
+    // userClientsD[p.client]["name"] +
+    ", " + p.description + "</span>";
     hc = hc + "</div>";
     hc = hc + '<div class="col-5" style="text-align: right;">';
     hc =
@@ -387,13 +381,11 @@ async function doCapture(d) {
     types: ["screen"],
     thumbnailSize: { width: 1024, height: 768 },
   });
-  console.log(inputSources);
 
   const inputSourcesWin = await desktopCapturer.getSources({
     types: ["window"],
     thumbnailSize: { width: 1024, height: 768 },
   });
-  console.log(inputSourcesWin);
   // title
   let title = "None";
   if (inputSourcesWin && inputSourcesWin.length > 0) {
@@ -423,11 +415,11 @@ async function doCapture(d) {
   const newHed = { "Content-Type": "multipart/form-data" };
   // upload the ss and then upload the details of the img.
   axios.post(ep + "upload", formData, { headers: newHed }).then((resP) => {
-    console.log(resP);
     // img details uploaded only when true is passed which is passed during the interval and ending the act.
     if (d) {
       const actData = {
-        // project: curProjectID,
+        projectId: curProject._id,
+        clientId: curProject.client,
         // task: curTaskID,
         image: resP.data.path,
         activityAt: new Date().getTime(),
@@ -453,7 +445,6 @@ async function doCapture(d) {
           headers: reqHeaders,
         })
         .then((resPK) => {
-          console.log(resPK);
           performanceData = 100;
           avgPerformance = 100;
           currSsIdleTime = 0;
@@ -520,6 +511,7 @@ async function handleCapture(t) {
   ipcRenderer.send("idle:start");
   curTaskID = document.getElementById("selectTask").value;
   if (t.checked) {
+    // reset the idle time for the activity
     currActIdleTime = 0;
     // just a name, not id
     curActivity = makeid(10) + "-" + new Date().getTime();
@@ -535,14 +527,14 @@ async function handleCapture(t) {
     curProject["startD"] = new Date();
     const actData = {
       // isInternal : false,
-      // client: curClientId,
-      // employee: curUserID,
-      // project: curProjectID,
+      clientId: curProject.client,
+      projectId: curProject._id,
       // task: curTaskID,
       startTime: new Date().getTime(),
       endTime: new Date().getTime(),
       // activity: curActivity,
       performanceData: 100,
+      consumeTime: 0,
     };
     // update the activity and
     // send req to make a new id and retrieve the id.
@@ -550,7 +542,6 @@ async function handleCapture(t) {
     axios
       .post(ep + "activity", actData, { headers: reqHeaders })
       .then((resPK) => {
-        console.log(resPK.data.activity._id);
         curActivityId = resPK.data.activity._id;
       });
 
@@ -587,9 +578,7 @@ async function handleCapture(t) {
       .patch(ep + `activity/${curActivityId}`, actData, {
         headers: reqHeaders,
       })
-      .then((resPK) => {
-        console.log(resPK);
-      });
+      .then((resPK) => {});
     // make a new field in the project field in user, consume time
     // update the consume time for the project
     // axios
