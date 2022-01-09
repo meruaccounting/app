@@ -22,6 +22,7 @@ ipcRenderer.on("idle:true", (e, idleTime) => {
 const fs = require("fs");
 // let ep = "https://ie.kcss.in/api/";
 let ep = "http://localhost:8000/";
+let isInternal = false;
 let currSsTimer = 0;
 let curUserID = 0;
 let curProjectID = 0;
@@ -90,6 +91,12 @@ reqHeaders = {
 
 let mediaRecorder;
 const recordedChunks = [];
+
+// intExt
+function intExt() {
+  const btn = document.querySelector("#intExt");
+  isInternal = btn.checked;
+}
 
 // get projects. change this to our api
 function callProjects() {
@@ -511,6 +518,8 @@ async function handleCapture(t) {
   ipcRenderer.send("idle:start");
   curTaskID = document.getElementById("selectTask").value;
   if (t.checked) {
+    // disable the intExt
+    document.querySelector("#intExt").disabled = true;
     // reset the idle time for the activity
     currActIdleTime = 0;
     // just a name, not id
@@ -526,7 +535,7 @@ async function handleCapture(t) {
     // set the start Date of the project
     curProject["startD"] = new Date();
     const actData = {
-      // isInternal : false,
+      isInternal: isInternal,
       clientId: curProject.client,
       projectId: curProject._id,
       // task: curTaskID,
@@ -552,6 +561,8 @@ async function handleCapture(t) {
     // on stop the activity
   } else {
     ipcRenderer.send("idle:stop");
+    // enable the intExt
+    document.querySelector("#intExt").disabled = false;
     // run setlastimage for one last time
     setLastImage(true);
     // clear interval

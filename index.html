@@ -411,21 +411,12 @@
       </div>
       <div
         id="task-details"
-        style="display: none"
+        style="display: block"
         class="container"
         class="row justify-content-md-center"
       >
         <div>
           <div class="row">
-            <div
-              onclick="refreshProjects();document.getElementById('task-details').style='display: none;';document.getElementById('main-details').style='display: block; margin: 15px;margin-top: 0px;';"
-              class="col-1"
-              style="display: none"
-            >
-              <h1 style="padding-top: 10px; color: green; cursor: pointer">
-                <
-              </h1>
-            </div>
             <div class="col-11" style="text-align: left">
               <h5
                 class="text-success"
@@ -443,7 +434,24 @@
           <hr style="margin: 5px -12px; border: 1px solid" />
           <div class="row">
             <div class="col-7" style="text-align: left">
-              <span class="text-muted">Current Session</span>
+              <!-- intExt -->
+              <label class="form-check-label" for="intExt">Internal</label>
+              <div style="display: inline-block" class="form-check form-switch">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  role="switch"
+                  id="intExt"
+                  onclick="intExt()"
+                  checked
+                />
+                <label class="form-check-label" for="intExt">External</label>
+              </div>
+              <!-- intExt -->
+
+              <span style="display: block" class="text-muted"
+                >Current Session</span
+              >
               <h1 id="timId">0 hrs 00 m</h1>
               <span style="font-size: 12px" class="text-muted"
                 >Today (<span id="hDayOfWeek">Sat</span> UTC)</span
