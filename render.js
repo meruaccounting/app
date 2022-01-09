@@ -3,6 +3,7 @@ const axios = require("axios");
 const { writeFile } = require("fs");
 const mergeImg = require("merge-img");
 const Jimp = require("jimp");
+const util = require("util");
 
 // idle
 let totalIdleTime = 0;
@@ -370,6 +371,16 @@ async function doScreens() {
   });
 }
 
+let getBuff = (image) => {
+  return new Promise((resolve, reject) => {
+    image.getBuffer(Jimp.MIME_PNG, (err, buff) => {
+      if (err) reject(err);
+
+      resolve(buff);
+    });
+  });
+};
+
 async function doCapture(d) {
   const photos = [];
   const inputSources = await desktopCapturer.getSources({
@@ -392,27 +403,19 @@ async function doCapture(d) {
   // buffers to pass to mergeImg
   let images = [];
   // to use in new File
-  let buffer;
-  if (inputSources.length == 1) {
+  let newBuff = "newBuff";
+  if (inputSources.length > 1) {
     for (let i = 0; i < inputSources.length; i++) {
       images.push(inputSources[i].thumbnail.toPNG());
     }
-    mergeImg(images).then((image) => {
-      // convertingg iamge jimp object to img buff to pass into new File
-      image.write("dual.png", () => {
-        console.log("done");
-      });
-      // its asunc, fix it, make it sync
-      image.getBuffer(Jimp.MIME_PNG, (err, buff) => {
-        console.log(buff);
-      });
-    });
+    const fuck = await mergeImg(images);
+    newBuff = await getBuff(fuck);
   } else {
-    buffer = inputSources[0].thumbnail.toPNG();
+    newBuff = inputSources[0].thumbnail.toPNG();
   }
   const fileName = makeid(10) + "-" + new Date().getTime() + ".png";
   const filePath = "./images/captured/" + fileName;
-  const ffile = new File([buffer], "foo.png", {
+  const ffile = new File([newBuff], "foo.png", {
     type: "image/png",
   });
   var formData = new FormData();
@@ -491,7 +494,7 @@ async function doCapture(d) {
   //       });
   //   }
   // });
-  writeFile(filePath, buffer, () => {});
+  writeFile(filePath, newBuff, () => {});
   const img = {
     dataURL: inputSources[0].thumbnail.toDataURL(),
     path: filePath,
