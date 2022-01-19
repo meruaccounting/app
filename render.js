@@ -33,27 +33,27 @@ let curProjectIDS;
 let curClientIdS;
 // let curSubTaskID = 0;
 let userProjects = [
-  {
-    _id: 1,
-    name: "pro1",
-    clientId: "1c",
-    clientName: "c1",
-    consumetime: 300,
-  },
-  {
-    _id: 2,
-    name: "pro2",
-    clientId: "2c",
-    clientName: "c2",
-    consumetime: 100,
-  },
-  {
-    _id: 3,
-    name: "pro3",
-    clientId: "3c",
-    clientName: "c3",
-    consumetime: 6600,
-  },
+  // {
+  //   _id: 1,
+  //   name: "pro1",
+  //   clientId: "1c",
+  //   clientName: "c1",
+  //   consumetime: 300,
+  // },
+  // {
+  //   _id: 2,
+  //   name: "pro2",
+  //   clientId: "2c",
+  //   clientName: "c2",
+  //   consumetime: 100,
+  // },
+  // {
+  //   _id: 3,
+  //   name: "pro3",
+  //   clientId: "3c",
+  //   clientName: "c3",
+  //   consumetime: 6600,
+  // },
 ];
 // let userClients = [];
 // let userClientsD = {};
@@ -75,7 +75,7 @@ let daysFull = [
 ];
 let daysSort = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-let sstime = 120000;
+let sstime = 600000;
 let apause = 5;
 
 const { dialog, Menu } = remote;
@@ -103,6 +103,7 @@ function callProjects() {
   axios.get(ep + "project", { headers: reqHeaders }).then((resP) => {
     userProjects = resP.data.data;
     renderProjects();
+    selectProject(0);
   });
   console.log("projectsLoaded");
 }
@@ -316,7 +317,7 @@ btn.addEventListener("click", (e) => {
         document.getElementById("task-details").style = "display: block";
       }
       callProjects();
-      selectProject(0);
+      // selectProject(0);
     })
     .catch((err) => {
       document.getElementById("errorL").innerHTML =
@@ -428,11 +429,13 @@ async function doCapture(d) {
         projectId: curProject._id,
         clientId: curProject.client,
         // task: curTaskID,
-        image: resP.data.path,
+        // image: resP.data.path,
+        image: "https://i.ibb.co/dt49XwW/image-1641720419332.png",
         activityAt: new Date().getTime(),
         // activity: curActivity,
         activityId: curActivityId,
-        performanceData: 100 - (currSsIdleTime / currSsTimer) * 100,
+        performanceData:
+          Math.round((100 - (currSsIdleTime / currSsTimer) * 100) * 100) / 100,
         title: title,
       };
       axios
@@ -440,23 +443,26 @@ async function doCapture(d) {
           headers: reqHeaders,
         })
         .then((resPK) => {});
-      // update activity data on every screenshot
-      const actDataAct = {
-        endTime: new Date().getTime(),
-        consumeTime: curProject.consumetimeCur,
-        performanceData:
-          100 - (currActIdleTime / curProject.consumetimeCur) * 100,
-      };
-      axios
-        .patch(ep + `activity/${curActivityId}`, actDataAct, {
-          headers: reqHeaders,
-        })
-        .then((resPK) => {
-          performanceData = 100;
-          avgPerformance = 100;
-          currSsIdleTime = 0;
-          currSsTimer = 0;
-        });
+      if (document.querySelector("#handleCheckbox").checked) {
+        const actDataAct = {
+          endTime: new Date().getTime(),
+          consumeTime: curProject.consumetimeCur,
+          performanceData:
+            Math.round(
+              (100 - (currActIdleTime / curProject.consumetimeCur) * 100) * 100
+            ) / 100,
+        };
+        axios
+          .patch(ep + `activity/${curActivityId}`, actDataAct, {
+            headers: reqHeaders,
+          })
+          .then((resPK) => {
+            performanceData = 100;
+            avgPerformance = 100;
+            currSsIdleTime = 0;
+            currSsTimer = 0;
+          });
+      }
       // also send a req to update the project consume time as well
       // for both projects, in user and also in projects schema
     }
@@ -539,6 +545,7 @@ async function handleCapture(t) {
     // set the start Date of the project
     curProject["startD"] = new Date();
     const actData = {
+      isAccepted: true,
       isInternal: isInternal,
       clientId: curProject.client,
       projectId: curProject._id,
@@ -549,6 +556,7 @@ async function handleCapture(t) {
       performanceData: 100,
       consumeTime: 0,
     };
+    console.log(actData);
     // update the activity and
     // send req to make a new id and retrieve the id.
     // initial performance is 100.
@@ -587,7 +595,9 @@ async function handleCapture(t) {
       endTime: new Date().getTime(),
       consumeTime: curProject.consumetimeCur,
       performanceData:
-        100 - (currActIdleTime / curProject.consumetimeCur) * 100,
+        Math.round(
+          (100 - (currActIdleTime / curProject.consumetimeCur) * 100) * 100
+        ) / 100,
     };
     axios
       .patch(ep + `activity/${curActivityId}`, actData, {
