@@ -89,7 +89,7 @@
                   />
                 </svg>
               </span>
-              <input
+              <!-- <input
                 onkeyup="searchProjects(this)"
                 style="border-left: none"
                 type="text"
@@ -98,6 +98,14 @@
                 id="searchbox"
                 aria-describedby="inputGroupPrepend"
                 required=""
+              /> -->
+              <input
+                style="border-left: none"
+                type="search"
+                class="form-control"
+                placeholder="Search Projects"
+                id="search"
+                aria-describedby="inputGroupPrepend"
               />
               <div class="invalid-feedback">Please search project.</div>
             </div>
@@ -201,7 +209,8 @@
           id="allprojectsv"
           style="max-height: 390px; overflow-y: auto"
         >
-          <div class="col">
+          <div style="margin: auto; padding: 30px" class="spinner-border"></div>
+          <!-- <div class="col">
             <div class="row">
               <div
                 onclick="document.getElementById('task-details').style='display: block;';document.getElementById('main-details').style='display: none;';"
@@ -419,7 +428,7 @@
                 <hr />
               </div>
             </div>
-          </div>
+          </div> -->
         </div>
       </div>
       <div

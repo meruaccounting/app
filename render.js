@@ -11,8 +11,12 @@ let currSsIdleTime = 0;
 let currActIdleTime = 0;
 ipcRenderer.on("idle:true", (e, idleTime) => {
   // console.log(idleTime);
-  if (idleTime > 1000 * 300) {
+  if (idleTime > apause * 60) {
     console.log("stop the recording here");
+    new Notification("Monitoring Stopped", {
+      body: "Your Screen Monitoring has been stopped due to inactivity",
+    });
+    document.querySelector("#handleCheckbox").click();
   }
   currActIdleTime = currActIdleTime + 1;
   currSsIdleTime = currSsIdleTime + 1;
@@ -22,6 +26,7 @@ ipcRenderer.on("idle:true", (e, idleTime) => {
 const fs = require("fs");
 // let ep = "https://ie.kcss.in/api/";
 let ep = "http://localhost:8000/";
+let settings = 0;
 let isInternal = false;
 let currSsTimer = 0;
 let curUserID = 0;
@@ -102,14 +107,14 @@ function intExt() {
 function callProjects() {
   axios.get(ep + "project", { headers: reqHeaders }).then((resP) => {
     userProjects = resP.data.data;
-    renderProjects();
+    renderProjects(userProjects);
     selectProject(0);
   });
   console.log("projectsLoaded");
 }
 let recording = true;
 
-// onclick select projects?
+// onclick select projects.
 async function selectProject(idx) {
   if (
     document.querySelector("#handleCheckbox").checked &&
@@ -125,60 +130,75 @@ async function selectProject(idx) {
       return;
     }
   }
-  curProject = userProjects[idx];
-  // curProjectID = userProjects[idx]["_id"];
-  // curClientId = userProjects[idx]["client"];
-  ///////////////old...,..........
-  // curProject = userProjects[idx];
-  // curProjectID = userProjects[idx]["_id"];
-  // curClientId = userProjects[idx]["client"];
-  // send a req to show current active project
-  // axios
-  //   .post(
-  //     ep + "kcs/list/smtasks",
-  //     { project: curProjectID, status: "active" },
-  //     { headers: reqHeaders }
-  //   )
-  //   .then((resP) => {
-  // let hc = "";
-  // for (let i = 0; i < resP.data.length; i++) {
-  //   if (i == 0) {
-  //     hc =
-  //       hc +
-  //       "<option value='" +
-  //       resP.data[i]["_id"] +
-  //       "' selected>" +
-  //       resP.data[i]["name"] +
-  //       "</option>";
-  //   } else {
-  //     hc =
-  //       hc +
-  //       "<option value='" +
-  //       resP.data[i]["_id"] +
-  //       "' >" +
-  //       resP.data[i]["name"] +
-  //       "</option>";
-  //   }
-  // }
-  // if (resP.data.length == 0) {
-  //   hc = hc + "<option value='0' selected>No Tasks!</option>";
-  // }
-  // render the name of the selected task
-  // document.getElementById("selectTask").innerHTML = hc;
+  if (userProjects.length !== 0) {
+    curProject = userProjects[idx];
+    // curProjectID = userProjects[idx]["_id"];
+    // curClientId = userProjects[idx]["client"];
+    ///////////////old...,..........
+    // curProject = userProjects[idx];
+    // curProjectID = userProjects[idx]["_id"];
+    // curClientId = userProjects[idx]["client"];
+    // send a req to show current active project
+    // axios
+    //   .post(
+    //     ep + "kcs/list/smtasks",
+    //     { project: curProjectID, status: "active" },
+    //     { headers: reqHeaders }
+    //   )
+    //   .then((resP) => {
+    // let hc = "";
+    // for (let i = 0; i < resP.data.length; i++) {
+    //   if (i == 0) {
+    //     hc =
+    //       hc +
+    //       "<option value='" +
+    //       resP.data[i]["_id"] +
+    //       "' selected>" +
+    //       resP.data[i]["name"] +
+    //       "</option>";
+    //   } else {
+    //     hc =
+    //       hc +
+    //       "<option value='" +
+    //       resP.data[i]["_id"] +
+    //       "' >" +
+    //       resP.data[i]["name"] +
+    //       "</option>";
+    //   }
+    // }
+    // if (resP.data.length == 0) {
+    //   hc = hc + "<option value='0' selected>No Tasks!</option>";
+    // }
+    // render the name of the selected task
+    // document.getElementById("selectTask").innerHTML = hc;
 
-  const tm = secondsToHms(curProject.consumetime, "h:mm");
-  document.getElementById("hProjectName").innerHTML = curProject.name;
-  document.getElementById("hClientName").innerHTML = curProject.clientName;
-  // userClientsD[curProject.client]["name"];
-  document.getElementById("hProjectDesc").innerHTML = curProject.description;
-  document.getElementById("hDayOfWeek").innerHTML =
-    daysSort[new Date().getDay()];
-  document.getElementById("hConsumeTime").innerHTML = tm + " hrs";
-  document.getElementById("hOutOfTime").innerHTML =
-    tm + " of " + curProject.hours + " hrs";
-  document.getElementById("timId").innerHTML = secondsToHms(
-    curProject.consumetime
-  );
+    const tm = secondsToHms(curProject.consumetime, "h:mm");
+    document.getElementById("hProjectName").innerHTML = curProject.name;
+    document.getElementById("hClientName").innerHTML = curProject.client.name;
+    // userClientsD[curProject.client]["name"];
+    // document.getElementById("hProjectDesc").innerHTML = curProject.description;
+    document.getElementById("hProjectDesc").innerHTML = "SOME DESCRIPTION";
+    document.getElementById("hDayOfWeek").innerHTML =
+      daysSort[new Date().getDay()];
+    document.getElementById("hConsumeTime").innerHTML = tm + " hrs";
+    document.getElementById("hOutOfTime").innerHTML =
+      tm + " of " + curProject.hours + " hrs";
+    document.getElementById("timId").innerHTML = secondsToHms(
+      curProject.consumetime
+    );
+  } else {
+    document.getElementById("hProjectName").innerHTML = "-";
+    document.getElementById("hClientName").innerHTML = "-";
+    // userClientsD[curProject.client]["name"];
+    // document.getElementById("hProjectDesc").innerHTML = curProject.description;
+    document.getElementById("hProjectDesc").innerHTML = "-";
+    document.getElementById("hDayOfWeek").innerHTML =
+      daysSort[new Date().getDay()];
+    document.getElementById("hConsumeTime").innerHTML = "00" + " hrs";
+    document.getElementById("hOutOfTime").innerHTML =
+      "00" + " of " + "00" + " hrs";
+    document.getElementById("timId").innerHTML = "00:00";
+  }
 
   // });
 }
@@ -196,17 +216,17 @@ async function searchProjects(t) {
 }
 
 async function refreshProjects() {
-  document.getElementById("searchbox").value = "";
+  document.getElementById("search").value = "";
   callProjects({ employees: curUserID, status: "active" });
 }
 
-function renderProjects() {
+function renderProjects(projectList) {
   let hc = '<div class="col">';
-  if (userProjects.length == 0)
+  if (projectList.length == 0)
     hc = hc + "<h1 style='text-align: center;'>No project found!</h1>";
 
-  for (let i = 0; i < userProjects.length; i++) {
-    const p = userProjects[i];
+  for (let i = 0; i < projectList.length; i++) {
+    const p = projectList[i];
     p["consumetime"] = p.consumetime > 0 ? p.consumetime : 0;
     hc = hc + '<div class="row">';
     hc =
@@ -218,7 +238,7 @@ function renderProjects() {
     // ");document.getElementById('task-details').style='display: block;';document.getElementById('main-details').style='display: none;';\" class=\"col-7\" style=\"text-align: left; cursor: pointer;\">";
     hc =
       hc + '<h5 style="color: green; margin-bottom: 0px;">' + p.name + "</h5>";
-    hc = hc + '<span style="font-size: 12px;">' + p.client;
+    hc = hc + '<span style="font-size: 12px;">' + p.client.name;
     // p.clientName +
     // userClientsD[p.client]["name"] +
     ", " + p.description + "</span>";
@@ -293,6 +313,20 @@ function renderProjects() {
 // }
 
 // LOGIN ////////////////////////////////////////////////////////////////
+
+function loadSettings() {
+  const s = settings.ScreenShotPerHour.isTeamSetting
+    ? settings.ScreenShotPerHour.teamValue
+    : settings.ScreenShotPerHour.individualValue;
+  sstime = 3600000 / s;
+  if (s === 0) sstime = 6000000;
+  else sstime = 3600000 / s;
+  const apause = settings.AutoPause.isTeamSetting
+    ? settings.AutoPause.teamValue
+    : settings.AutoPause.individualValue;
+  console.log(sstime, " ", apause * 60, " ");
+}
+
 const btn = document.querySelector("#start-auth");
 btn.addEventListener("click", (e) => {
   e.preventDefault();
@@ -301,13 +335,20 @@ btn.addEventListener("click", (e) => {
   const password = document.getElementById("authPass").value;
   axios
     .post("http://localhost:8000/login", { email, password })
-    .then((res) => {
-      console.log("login data", res);
+    .then(async (res) => {
       if (res.data.status === "success") {
         // reqToken = res.data.token;
         // userData["server"] = res.data.server;
         // curUserID = res.userData._id;
         reqHeaders["Authorization"] = "Bearer " + res.data.token;
+        // // getcommondata for settings
+        const { data } = await axios.get(ep + `commondata`, {
+          headers: reqHeaders,
+        });
+        settings = data.user.settings;
+        loadSettings();
+        console.log(data);
+        console.log(settings);
         document.getElementById("login-details").style = "display:none";
         document.getElementById("main-details").style =
           "display: block; margin: 15px;margin-top: 0px;";
@@ -427,7 +468,7 @@ async function doCapture(d) {
     if (d) {
       const actData = {
         projectId: curProject._id,
-        clientId: curProject.client,
+        clientId: curProject.client._id,
         // task: curTaskID,
         // image: resP.data.path,
         image: "https://i.ibb.co/dt49XwW/image-1641720419332.png",
@@ -547,7 +588,7 @@ async function handleCapture(t) {
     const actData = {
       isAccepted: true,
       isInternal: isInternal,
-      clientId: curProject.client,
+      clientId: curProject.client._id,
       projectId: curProject._id,
       // task: curTaskID,
       startTime: new Date().getTime(),
@@ -784,3 +825,22 @@ function logout() {
   location.reload();
 }
 ``;
+
+// search functionality.
+const search = document.getElementById("search");
+let search_term = "";
+
+const showList = () => {
+  const newData = userProjects.filter((item) => {
+    return (
+      item.name.toLowerCase().includes(search_term) ||
+      item.client.name.toLowerCase().includes(search_term)
+    );
+  });
+  renderProjects(newData);
+};
+
+search.addEventListener("input", (event) => {
+  search_term = event.target.value.toLowerCase();
+  showList();
+});
