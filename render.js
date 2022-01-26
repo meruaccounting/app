@@ -80,7 +80,7 @@ let daysFull = [
 ];
 let daysSort = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-let sstime = 600000;
+let sstime = 2000;
 let apause = 5;
 
 const { dialog, Menu } = remote;
@@ -346,7 +346,7 @@ btn.addEventListener("click", (e) => {
           headers: reqHeaders,
         });
         settings = data.user.settings;
-        loadSettings();
+        // loadSettings();
         console.log(data);
         console.log(settings);
         document.getElementById("login-details").style = "display:none";
