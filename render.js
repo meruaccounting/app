@@ -80,7 +80,7 @@ let daysFull = [
 ];
 let daysSort = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-let sstime = 2000;
+let sstime = 600000;
 let apause = 5;
 
 const { dialog, Menu } = remote;
@@ -346,7 +346,7 @@ btn.addEventListener("click", (e) => {
           headers: reqHeaders,
         });
         settings = data.user.settings;
-        // loadSettings();
+        loadSettings();
         console.log(data);
         console.log(settings);
         document.getElementById("login-details").style = "display:none";
@@ -487,6 +487,7 @@ async function doCapture(d) {
       if (document.querySelector("#handleCheckbox").checked) {
         const actDataAct = {
           endTime: new Date().getTime(),
+          projectId: curProject._id,
           consumeTime: curProject.consumetimeCur,
           performanceData:
             Math.round(
@@ -633,6 +634,7 @@ async function handleCapture(t) {
       tm + " of " + curProject.hours + " hrs";
     // update the end time of the activity and also the time consumed and performance
     const actData = {
+      projectId: curProject._id,
       endTime: new Date().getTime(),
       consumeTime: curProject.consumetimeCur,
       performanceData:
