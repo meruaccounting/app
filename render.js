@@ -486,6 +486,8 @@ async function doCapture(d) {
         .then((resPK) => {});
       if (document.querySelector("#handleCheckbox").checked) {
         const actDataAct = {
+          newDailyHours: 0,
+          newProjectHours: 0,
           endTime: new Date().getTime(),
           projectId: curProject._id,
           consumeTime: curProject.consumetimeCur,
@@ -637,6 +639,8 @@ async function handleCapture(t) {
       projectId: curProject._id,
       endTime: new Date().getTime(),
       consumeTime: curProject.consumetimeCur,
+      newProjectHours: !isInternal ? curProject.consumetimeCur : 0,
+      newDailyHours: curProject.consumetimeCur,
       performanceData:
         Math.round(
           (100 - (currActIdleTime / curProject.consumetimeCur) * 100) * 100
@@ -647,30 +651,7 @@ async function handleCapture(t) {
         headers: reqHeaders,
       })
       .then((resPK) => {});
-    // make a new field in the project field in user, consume time
-    // update the consume time for the project
-    // axios
-    //   .put(
-    //     ep + "kcs/smproject/" + curProjectID,
-    //     { consumetime: curProject.consumetime },
-    //     { headers: reqHeaders }
-    //   )
-    //   .then((resPK) => {});
-    /////////////////////////////////////////
-    // axios
-    //   .put(ep + "kcs/smactivity/" + curActivityId, actData, {
-    //     headers: reqHeaders,
-    //   })
-    //   .then((resPK) => {});
-    // // make a new field in the project field in user, consume time
-    // // update the consume time for the project
-    // axios
-    //   .put(
-    //     ep + "kcs/smproject/" + curProjectID,
-    //     { consumetime: curProject.consumetime },
-    //     { headers: reqHeaders }
-    //   )
-    //   .then((resPK) => {});
+
     new Notification("Stop Monitoring", {
       body: "Your screenshot monitoring is stopped sucessfully;",
     });
