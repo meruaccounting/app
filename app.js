@@ -7,6 +7,10 @@ const {
 } = require("electron");
 var fs = require("fs");
 
+// dev/prod
+process.env.NODE_ENV = "development";
+const isDev = process.env.NODE_ENV !== "production" ? true : false;
+
 if (process.platform === "win32") {
   app.name = "KC Screen Monitoring";
   app.setAppUserModelId(app.name);
@@ -15,14 +19,16 @@ if (process.platform === "win32") {
 let win;
 function createWindow() {
   win = new BrowserWindow({
-    width: 360,
-    height: 600,
+    width: 500,
+    height: 800,
+    resizable: isDev,
     icon: "assets/images/icon.png",
     autoHideMenuBar: true,
     titleBarStyle: "hiddenInset",
     webPreferences: {
       nodeIntegration: true,
       enableRemoteModule: true,
+      devTools: isDev,
     },
   });
 

@@ -241,7 +241,8 @@ p {
   margin: 0;
 }
 
-.login-form p a {
+.login-form div a {
+  font-weight: bold;
   color: #4caf50;
   font-size: 14px;
   text-decoration: none;

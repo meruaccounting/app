@@ -107,6 +107,7 @@ function intExt() {
 function callProjects() {
   axios.get(ep + "project", { headers: reqHeaders }).then((resP) => {
     userProjects = resP.data.data;
+    console.log(userProjects);
     renderProjects(userProjects);
     selectProject(0);
   });
@@ -247,15 +248,15 @@ function renderProjects(projectList) {
     hc =
       hc +
       '<h5 style="margin-bottom: 0px;">' +
-      secondsToHms(p.consumetime) +
+      secondsToHms(p.consumeTime) +
       "</h5>";
     hc = hc + '<div class="progress" style="height: 5px; margin-top:5px;">';
     hc =
       hc +
       '<div class="progress-bar" role="progressbar" style="width: ' +
-      (p.consumetime * 100) / (p.hours * 3600) +
+      (p.consumeTime * 100) / (p.hours * 3600) +
       '%; background-color: green;" aria-valuenow="' +
-      (p.consumetime * 100) / (p.hours * 3600) +
+      (p.consumeTime * 100) / (p.hours * 3600) +
       '" aria-valuemin="0" aria-valuemax="100"></div>';
     hc = hc + "</div>";
     hc = hc + '<span style="font-size: 12px;">of ' + p.hours + "hr</span>";
@@ -327,6 +328,39 @@ function loadSettings() {
   console.log(sstime, " ", apause * 60, " ");
 }
 
+function loadTime(data) {
+  const { dailyHours, monthlyTime, weeklyTime } = data;
+  document.querySelector("#todayTotal").innerText =
+    "Today: " +
+    (dailyHours.length !== 0
+      ? secondsToHms(dailyHours[0].totalHours)
+      : secondsToHms(0));
+  document.querySelector("#monthlyTotal").innerText =
+    "Month: " +
+    (weeklyTime.length !== 0
+      ? secondsToHms(weeklyTime[0].totalHours)
+      : secondsToHms(0));
+  document.querySelector("#weeklyTotal").innerText =
+    "Week: " +
+    (monthlyTime.length !== 0
+      ? secondsToHms(monthlyTime[0].totalHours)
+      : secondsToHms(0));
+}
+
+function commonDataInterval(d) {
+  let cdInt = 0;
+  if (d) {
+    cdInt = setInterval(async () => {
+      const { data } = await axios.get(ep + `commondata`, {
+        headers: reqHeaders,
+      });
+      loadTime(data);
+    }, 60000);
+  } else {
+    clearInterval(cdInt);
+  }
+}
+
 const btn = document.querySelector("#start-auth");
 btn.addEventListener("click", (e) => {
   e.preventDefault();
@@ -345,8 +379,10 @@ btn.addEventListener("click", (e) => {
         const { data } = await axios.get(ep + `commondata`, {
           headers: reqHeaders,
         });
+        loadTime(data);
         settings = data.user.settings;
         loadSettings();
+        commonDataInterval(true);
         console.log(data);
         console.log(settings);
         document.getElementById("login-details").style = "display:none";
@@ -806,6 +842,7 @@ function eventHandler(event) {}
 
 function logout() {
   location.reload();
+  commonDataInterval(false);
 }
 ``;
 
