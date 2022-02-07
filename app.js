@@ -68,7 +68,6 @@ ipcMain.on("idle:start", () => {
 ipcMain.on("idle:stop", () => {
   console.log("received");
   clearInterval(idleCheck);
-  console.log(idleCheck);
 });
 // make a function to calculate idle time percentage and put it into performance variable, avg, total and activity wise.
 

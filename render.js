@@ -347,17 +347,40 @@ function loadTime(data) {
       : secondsToHms(0));
 }
 
+let cdInt = 0;
 function commonDataInterval(d) {
-  let cdInt = 0;
   if (d) {
     cdInt = setInterval(async () => {
-      const { data } = await axios.get(ep + `commondata`, {
-        headers: reqHeaders,
-      });
+      const { data } = await axios.post(
+        ep + `commondata`,
+        {},
+        {
+          headers: reqHeaders,
+        }
+      );
       loadTime(data);
     }, 60000);
   } else {
     clearInterval(cdInt);
+  }
+}
+let laInt = 0;
+function lastActiveInterval(d) {
+  if (d) {
+    laInt = setInterval(async () => {
+      const { data } = await axios.post(
+        ep + "activity/lastActive",
+        { lastActive: new Date().getTime() },
+        {
+          headers: reqHeaders,
+        }
+      );
+    }, 120000);
+    console.log(laInt);
+  } else {
+    console.log("stopped");
+    clearInterval(laInt);
+    console.log(laInt);
   }
 }
 
@@ -375,10 +398,15 @@ btn.addEventListener("click", (e) => {
         // userData["server"] = res.data.server;
         // curUserID = res.userData._id;
         reqHeaders["Authorization"] = "Bearer " + res.data.token;
+        console.log(reqHeaders);
         // // getcommondata for settings
-        const { data } = await axios.get(ep + `commondata`, {
-          headers: reqHeaders,
-        });
+        const { data } = await axios.post(
+          ep + `commondata`,
+          {},
+          {
+            headers: reqHeaders,
+          }
+        );
         loadTime(data);
         settings = data.user.settings;
         loadSettings();
@@ -614,6 +642,8 @@ async function handleCapture(t) {
     currActIdleTime = 0;
     // just a name, not id
     curActivity = makeid(10) + "-" + new Date().getTime();
+    // last active interval
+    lastActiveInterval(true);
     // set last image false
     setLastImage(false);
     // start the current timer from 0
@@ -655,6 +685,8 @@ async function handleCapture(t) {
     ipcRenderer.send("idle:stop");
     // enable the intExt
     document.querySelector("#intExt").disabled = false;
+    // last active interval
+    lastActiveInterval(false);
     // run setlastimage for one last time
     setLastImage(true);
     // clear interval
