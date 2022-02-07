@@ -370,6 +370,13 @@ function commonDataInterval(d) {
 let laInt = 0;
 function lastActiveInterval(d) {
   if (d) {
+    axios.post(
+      ep + "activity/lastActive",
+      { lastActive: new Date().getTime() },
+      {
+        headers: reqHeaders,
+      }
+    );
     laInt = setInterval(async () => {
       const { data } = await axios.post(
         ep + "activity/lastActive",
@@ -381,9 +388,14 @@ function lastActiveInterval(d) {
     }, 120000);
     console.log(laInt);
   } else {
-    console.log("stopped");
+    axios.post(
+      ep + "activity/lastActive",
+      { lastActive: new Date().getTime() },
+      {
+        headers: reqHeaders,
+      }
+    );
     clearInterval(laInt);
-    console.log(laInt);
   }
 }
 
