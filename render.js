@@ -121,11 +121,7 @@ async function selectProject(idx) {
     document.querySelector("#handleCheckbox").checked &&
     curProject !== userProjects[idx]
   ) {
-    if (
-      confirm(
-        "Are you sure you want to change the project? This will stop the current Project timer"
-      )
-    ) {
+    if (confirm("This will stop the current Project timer")) {
       document.querySelector("#handleCheckbox").click();
     } else {
       return;
@@ -228,6 +224,7 @@ function renderProjects(projectList) {
 
   for (let i = 0; i < projectList.length; i++) {
     const p = projectList[i];
+
     p["consumetime"] = p.consumetime > 0 ? p.consumetime : 0;
     hc = hc + '<div class="row">';
     hc =
@@ -236,7 +233,7 @@ function renderProjects(projectList) {
       i +
       ');" class="col-7" style="text-align: left; cursor: pointer;">';
     // i +
-    // ");document.getElementById('task-details').style='display: block;';document.getElementById('main-details').style='display: none;';\" class=\"col-7\" style=\"text-align: left; cursor: pointer;\">";
+    //   ");document.getElementById('task-details').style='display: block;';document.getElementById('main-details').style='display: none;';\" class=\"col-7\" style=\"text-align: left; cursor: pointer;\">";
     hc =
       hc + '<h5 style="color: green; margin-bottom: 0px;">' + p.name + "</h5>";
     hc = hc + '<span style="font-size: 12px;">' + p.client.name;
@@ -254,12 +251,18 @@ function renderProjects(projectList) {
     hc =
       hc +
       '<div class="progress-bar" role="progressbar" style="width: ' +
-      (p.consumeTime * 100) / (p.hours * 3600) +
+      (p.budgetTime === 0
+        ? 100
+        : (p.consumeTime * 100) / (p.budgetTime * 3600)) +
       '%; background-color: green;" aria-valuenow="' +
-      (p.consumeTime * 100) / (p.hours * 3600) +
+      (p.consumeTime * 100) / (p.budgetTime * 3600) +
       '" aria-valuemin="0" aria-valuemax="100"></div>';
     hc = hc + "</div>";
-    hc = hc + '<span style="font-size: 12px;">of ' + p.hours + "hr</span>";
+    hc =
+      hc +
+      '<span style="font-size: 12px;">of ' +
+      (p.budgetTime === 0 ? "No budget Time " : p.budgetTime + "hr") +
+      "</span>";
     hc = hc + "</div>";
     hc = hc + '<div class="col" >';
     hc = hc + "<hr />";
