@@ -1,13 +1,13 @@
 {
-  "name": "kc-screen-monitoring",
+  "name": "meru-accounting-ssm",
   "version": "0.0.1",
-  "description": "KC Screen Monitoting App",
+  "description": "Meru Accounting",
   "author": "Hardik Barot",
   "main": "app.js",
   "scripts": {
     "start": "electron app.js",
     "package-mac": "electron-packager . --overwrite --platform=darwin --arch=x64 --icon=assets/icons/mac/icon.icns --prune=true --out=release-builds",
-    "package-win": "electron-packager . electron-tutorial-app --overwrite --asar=true --platform=win32 --arch=ia32 --icon=assets/images/meru1024.ico --prune=true --out=release-builds --version-string.CompanyName=CE --version-string.FileDescription=CE --version-string.ProductName=\"Electron Tutorial App\"",
+    "package-win": "electron-packager . electron-tutorial-app --overwrite --asar=true --platform=win32 --arch=ia32 --icon=assets/images/meru1024.ico --prune=true --out=release-builds --version-string.CompanyName=CE --version-string.FileDescription=CE --version-string.ProductName=\"Meru Accounting\"",
     "package-linux": "electron-packager . electron-tutorial-app --overwrite --asar=true --platform=linux --arch=x64 --icon=assets/icons/png/1024x1024.png --prune=true --out=release-builds"
   },
   "devDependencies": {

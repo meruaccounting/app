@@ -13,9 +13,12 @@ ipcRenderer.on("idle:true", (e, idleTime) => {
   // console.log(idleTime);
   if (idleTime > apause * 60) {
     console.log("stop the recording here");
-    new Notification("Monitoring Stopped", {
-      body: "Your Screen Monitoring has been stopped due to inactivity",
-    });
+    setTimeout(() => {
+      new Notification("Monitoring Stopped", {
+        body: "Your Screen Monitoring has been stopped due to inactivity",
+      });
+    }, 4000);
+
     document.querySelector("#handleCheckbox").click();
   }
   currActIdleTime = currActIdleTime + 1;
@@ -179,7 +182,10 @@ async function selectProject(idx) {
       daysSort[new Date().getDay()];
     document.getElementById("hConsumeTime").innerHTML = tm + " hrs";
     document.getElementById("hOutOfTime").innerHTML =
-      tm + " of " + curProject.hours + " hrs";
+      secondsToHms(curProject.consumeTime) +
+      " of " +
+      curProject.budgetTime +
+      " hrs";
     document.getElementById("timId").innerHTML = secondsToHms(
       curProject.consumetime
     );
@@ -445,6 +451,22 @@ btn.addEventListener("click", (e) => {
     });
 });
 
+function showSettings() {
+  document.getElementById("myDropdown").classList.toggle("show");
+}
+window.onclick = function (event) {
+  if (!event.target.matches(".dropbtn")) {
+    var dropdowns = document.getElementsByClassName("dropdown-content");
+    var i;
+    for (i = 0; i < dropdowns.length; i++) {
+      var openDropdown = dropdowns[i];
+      if (openDropdown.classList.contains("show")) {
+        openDropdown.classList.remove("show");
+      }
+    }
+  }
+};
+
 // btn.setAttribute("disabled", true);
 // iioauth2Client = new ElectronGoogleOAuth2(
 //   gDetails.id,
@@ -641,9 +663,11 @@ async function setLastImage(d) {
     document.getElementById("lastImage").src = lastCaptured;
   }
   if (d) {
-    new Notification("Screenshot Captured", {
-      body: "Your screenshot captured sucessfully;",
-    });
+    setTimeout(() => {
+      new Notification("Screenshot Captured", {
+        body: "Your screenshot captured sucessfully;",
+      });
+    }, 4000);
   }
 }
 
@@ -691,9 +715,11 @@ async function handleCapture(t) {
         curActivityId = resPK.data.activity._id;
       });
 
-    new Notification("Start Monitoring", {
-      body: "Your " + "screenshot monitoring is started sucessfully;",
-    });
+    setTimeout(() => {
+      new Notification("Start Monitoring", {
+        body: "Your " + "screenshot monitoring is started sucessfully;",
+      });
+    }, 4000);
 
     // on stop the activity
   } else {
@@ -734,10 +760,11 @@ async function handleCapture(t) {
         headers: reqHeaders,
       })
       .then((resPK) => {});
-
-    new Notification("Stop Monitoring", {
-      body: "Your screenshot monitoring is stopped sucessfully;",
-    });
+    // setTimeout(() => {
+    //   new Notification("Stop Monitoring", {
+    //     body: "Your screenshot monitoring is stopped sucessfully;",
+    //   });
+    // }, 2000);
   }
 }
 

@@ -12,7 +12,7 @@ process.env.NODE_ENV = "development";
 const isDev = process.env.NODE_ENV !== "production" ? true : false;
 
 if (process.platform === "win32") {
-  app.name = "KC Screen Monitoring";
+  app.name = "Meru Accounting";
   app.setAppUserModelId(app.name);
 }
 
@@ -22,7 +22,7 @@ function createWindow() {
     width: 500,
     height: 800,
     resizable: isDev,
-    icon: "assets/images/icon.png",
+    icon: "assets/images/meru1024.png",
     autoHideMenuBar: true,
     titleBarStyle: "hiddenInset",
     webPreferences: {

@@ -503,8 +503,14 @@
                 style="display: block; font-size: 12px"
                 class="text-muted"
                 style="display: block"
-                >This week (UTC)</span
+                >Total Hours done by the Team</span
               >
+              <!-- <span
+                style="display: block; font-size: 12px"
+                class="text-muted"
+                style="display: block"
+                >This week (UTC)</span
+              > -->
               <span
                 style="font-size: 12px"
                 class="text-muted"
@@ -530,19 +536,14 @@
                 <img id="lastImage" style="width: 100%" />
               </div>
             </div>
-            <div style="display: none" class="text-muted">
-              <a style="color: green" class="text-center pr-3"
-                >View work diary</a
-              >
-              <span style="margin: 0px 15px">|</span>
-              <a style="color: green" class="text-center pl-3"
-                >Add manual time</a
-              >
-            </div>
           </div>
         </div>
       </div>
-
+      <div id="myDropdown" class="dropdown-content">
+        <a href="#home">Home</a>
+        <a href="#about">About</a>
+        <a href="#contact">Contact</a>
+      </div>
       <div class="row" id="footer" style="display: none">
         <div
           class="col"
@@ -556,7 +557,10 @@
             left: 0px;
           "
         >
-          &#9881; &nbsp;<span id="user-name">Hardik Barot</span>
+          <span class="dropbtn" style="cursor: pointer" onclick="showSettings()"
+            >&#9881; &nbsp;</span
+          ><span id="user-name">Hardik Barot</span>
+
           <span onclick="logout()" style="cursor: pointer; float: right"
             >Logout</span
           >
