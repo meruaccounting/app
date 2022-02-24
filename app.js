@@ -8,7 +8,7 @@ const {
 var fs = require("fs");
 
 // dev/prod
-process.env.NODE_ENV = "production";
+process.env.NODE_ENV = "development";
 const isDev = process.env.NODE_ENV !== "production" ? true : false;
 
 if (process.platform === "win32") {

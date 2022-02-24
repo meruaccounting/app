@@ -4,6 +4,54 @@ const { writeFile } = require("fs");
 const mergeImg = require("merge-img");
 const Jimp = require("jimp");
 const util = require("util");
+const electron = require("electron");
+
+//////////////////
+// Importing powerMonitor from Main Process
+// Using remote Module
+const powerMonitor = electron.remote.powerMonitor;
+
+powerMonitor.on("suspend", () => {
+  console.log("The system is going to sleep");
+  if (running && document.querySelector("#handleCheckbox").checked) {
+    document.querySelector("#handleCheckbox").click();
+  }
+});
+
+powerMonitor.on("resume", () => {
+  if (running && !document.querySelector("#handleCheckbox").checked) {
+    document.querySelector("#handleCheckbox").click();
+  }
+  console.log("The system is resuming");
+});
+
+powerMonitor.on("on-ac", () => {
+  console.log("The system is on AC Power (charging)");
+});
+
+powerMonitor.on("on-battery", () => {
+  console.log("The system is on Battery Power");
+});
+
+powerMonitor.on("shutdown", () => {
+  console.log("The system is Shutting Down");
+  if (running) document.querySelector("#handleCheckbox").click();
+});
+
+powerMonitor.on("lock-screen", () => {
+  console.log("The system is about to be locked");
+});
+
+powerMonitor.on("unlock-screen", () => {
+  console.log("The system is unlocked");
+});
+
+const state = powerMonitor.getSystemIdleState(4);
+console.log("Current System State - ", state);
+
+const idle = powerMonitor.getSystemIdleTime();
+console.log("Current System Idle Time - ", idle);
+//////////////////////
 
 // idle
 let totalIdleTime = 0;
@@ -28,9 +76,9 @@ ipcRenderer.on("idle:true", (e, idleTime) => {
 
 const fs = require("fs");
 // let ep = "https://ssmonitor-backend.herokuapp.com/";
-
 let ep = "http://localhost:8000/";
 let settings = 0;
+let running = false;
 let isInternal = false;
 let currSsTimer = 0;
 let curUserID = 0;
@@ -677,6 +725,8 @@ async function handleCapture(t) {
   ipcRenderer.send("idle:start");
   curTaskID = document.getElementById("selectTask").value;
   if (t.checked) {
+    // running for sleep events
+    running = true;
     // disable the intExt
     document.querySelector("#intExt").disabled = true;
     // reset the idle time for the activity
@@ -726,6 +776,8 @@ async function handleCapture(t) {
     // on stop the activity
   } else {
     ipcRenderer.send("idle:stop");
+    // running false
+    running = false;
     // enable the intExt
     document.querySelector("#intExt").disabled = false;
     // last active interval
