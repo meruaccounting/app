@@ -27,7 +27,8 @@ ipcRenderer.on("idle:true", (e, idleTime) => {
 });
 
 const fs = require("fs");
-// let ep = "https://ie.kcss.in/api/";
+// let ep = "https://ssmonitor-backend.herokuapp.com/";
+
 let ep = "http://localhost:8000/";
 let settings = 0;
 let isInternal = false;
@@ -242,7 +243,7 @@ function renderProjects(projectList) {
     //   ");document.getElementById('task-details').style='display: block;';document.getElementById('main-details').style='display: none;';\" class=\"col-7\" style=\"text-align: left; cursor: pointer;\">";
     hc =
       hc + '<h5 style="color: green; margin-bottom: 0px;">' + p.name + "</h5>";
-    hc = hc + '<span style="font-size: 12px;">' + p.client.name;
+    hc = hc + '<span style="font-size: 12px;">' + p?.client?.name;
     // p.clientName +
     // userClientsD[p.client]["name"] +
     ", " + p.description + "</span>";
@@ -412,7 +413,7 @@ btn.addEventListener("click", (e) => {
   const email = document.getElementById("authEmail").value;
   const password = document.getElementById("authPass").value;
   axios
-    .post("http://localhost:8000/login", { email, password })
+    .post(ep + "login", { email, password })
     .then(async (res) => {
       if (res.data.status === "success") {
         // reqToken = res.data.token;
@@ -570,6 +571,7 @@ async function doCapture(d) {
       const actData = {
         projectId: curProject._id,
         clientId: curProject.client._id,
+        consumeTime: currSsTimer,
         // task: curTaskID,
         // image: resP.data.path,
         image: "https://i.ibb.co/dt49XwW/image-1641720419332.png",

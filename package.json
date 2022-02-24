@@ -7,17 +7,20 @@
   "scripts": {
     "start": "electron app.js",
     "package-mac": "electron-packager . --overwrite --platform=darwin --arch=x64 --icon=assets/icons/mac/icon.icns --prune=true --out=release-builds",
-    "package-win": "electron-packager . electron-tutorial-app --overwrite --asar=true --platform=win32 --arch=ia32 --icon=assets/images/meru1024.ico --prune=true --out=release-builds --version-string.CompanyName=CE --version-string.FileDescription=CE --version-string.ProductName=\"Meru Accounting\"",
-    "package-linux": "electron-packager . electron-tutorial-app --overwrite --asar=true --platform=linux --arch=x64 --icon=assets/icons/png/1024x1024.png --prune=true --out=release-builds"
+    "package-win": "electron-packager . meru-accounting --overwrite --asar --platform=win32 --arch=ia32 --icon=assets/images/meru1024.ico --prune=true --out=release-builds --version-string.CompanyName=CE --version-string.FileDescription=CE --version-string.ProductName=\"Meru Accounting\"",
+    "package-linux": "electron-packager . meru-accounting --overwrite --asar=true --platform=linux --arch=x64 --icon=assets/icons/png/1024x1024.png --prune=true --out=release-builds"
   },
   "devDependencies": {
     "electron": "11.1.1",
     "electron-builder": "^22.9.1",
-    "electron-packager": "^15.4.0"
+    "electron-packager": "^15.4.0",
+    "electron-wix-msi": "^3.2.0"
   },
   "dependencies": {
     "@getstation/electron-google-oauth2": "^2.1.0",
     "axios": "^0.21.1",
+    "electron-squirrel-startup": "^1.0.0",
+    "electron-winstaller": "^5.0.0",
     "googleapis": "^39.2.0",
     "idle-timeout": "^2.0.1",
     "jimp": "^0.16.1",
