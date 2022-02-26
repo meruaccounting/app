@@ -15,6 +15,7 @@ powerMonitor.on("suspend", () => {
   console.log("The system is going to sleep");
   if (running && document.querySelector("#handleCheckbox").checked) {
     document.querySelector("#handleCheckbox").click();
+    running = true;
   }
 });
 
@@ -75,7 +76,7 @@ ipcRenderer.on("idle:true", (e, idleTime) => {
 });
 
 const fs = require("fs");
-// let ep = "https://ssmonitor-backend.herokuapp.com/";
+// let ep = "https://monitoring-meru.herokuapp.com/";
 let ep = "http://localhost:8000/";
 let settings = 0;
 let running = false;
@@ -441,7 +442,6 @@ function lastActiveInterval(d) {
         }
       );
     }, 120000);
-    console.log(laInt);
   } else {
     axios.post(
       ep + "activity/lastActive",
@@ -451,6 +451,31 @@ function lastActiveInterval(d) {
       }
     );
     clearInterval(laInt);
+  }
+}
+let updateInt = 0;
+function updateActInt(d) {
+  if (d) {
+    const actData = {
+      projectId: curProject._id,
+      endTime: new Date().getTime(),
+      consumeTime: curProject.consumetimeCur,
+      newProjectHours: !isInternal ? curProject.consumetimeCur : 0,
+      newDailyHours: curProject.consumetimeCur,
+      performanceData:
+        Math.round(
+          (100 - (currActIdleTime / curProject.consumetimeCur) * 100) * 100
+        ) / 100,
+    };
+    updateInt = setInterval(async () => {
+      axios
+        .patch(ep + `activity/${curActivityId}`, actData, {
+          headers: reqHeaders,
+        })
+        .then((resPK) => {});
+    }, 60000);
+  } else {
+    clearInterval(updateInt);
   }
 }
 
@@ -743,6 +768,8 @@ async function handleCapture(t) {
     runCapture(true);
     // reset the currentime of project
     curProject["consumetimeCur"] = 0;
+    // set the update act int for timers
+    updateActInt(true);
     // set the start Date of the project
     curProject["startD"] = new Date();
     const actData = {
@@ -788,6 +815,8 @@ async function handleCapture(t) {
     runTimmer(false, curProject.consumetime);
     // stop the interval for setlastimage
     runCapture(false);
+    // stop the update act interval to false
+    updateActInt(false);
     // set the stop date for the project
     curProject["stopD"] = new Date();
     // update the total time of the project
