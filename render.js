@@ -162,7 +162,7 @@ function callProjects() {
     userProjects = resP.data.data;
     console.log(userProjects);
     renderProjects(userProjects);
-    selectProject(0);
+    if (!running) selectProject(0);
   });
   console.log("projectsLoaded");
 }
@@ -396,13 +396,13 @@ function loadTime(data) {
       : secondsToHms(0));
   document.querySelector("#monthlyTotal").innerText =
     "Month: " +
-    (weeklyTime.length !== 0
-      ? secondsToHms(weeklyTime[0].totalHours)
+    (monthlyTime.length !== 0
+      ? secondsToHms(monthlyTime[0].totalHours)
       : secondsToHms(0));
   document.querySelector("#weeklyTotal").innerText =
     "Week: " +
-    (monthlyTime.length !== 0
-      ? secondsToHms(monthlyTime[0].totalHours)
+    (weeklyTime.length !== 0
+      ? secondsToHms(weeklyTime[0].totalHours)
       : secondsToHms(0));
 }
 
@@ -456,18 +456,18 @@ function lastActiveInterval(d) {
 let updateInt = 0;
 function updateActInt(d) {
   if (d) {
-    const actData = {
-      projectId: curProject._id,
-      endTime: new Date().getTime(),
-      consumeTime: curProject.consumetimeCur,
-      newProjectHours: !isInternal ? curProject.consumetimeCur : 0,
-      newDailyHours: curProject.consumetimeCur,
-      performanceData:
-        Math.round(
-          (100 - (currActIdleTime / curProject.consumetimeCur) * 100) * 100
-        ) / 100,
-    };
     updateInt = setInterval(async () => {
+      const actData = {
+        projectId: curProject._id,
+        endTime: new Date().getTime(),
+        consumeTime: curProject.consumetimeCur,
+        // newProjectHours: !isInternal ? curProject.consumetimeCur : 0,
+        // newDailyHours: curProject.consumetimeCur,
+        performanceData:
+          Math.round(
+            (100 - (currActIdleTime / curProject.consumetimeCur) * 100) * 100
+          ) / 100,
+      };
       axios
         .patch(ep + `activity/${curActivityId}`, actData, {
           headers: reqHeaders,
@@ -502,6 +502,7 @@ btn.addEventListener("click", (e) => {
             headers: reqHeaders,
           }
         );
+        console.log(data);
         loadTime(data);
         settings = data.user.settings;
         loadSettings();
@@ -662,8 +663,8 @@ async function doCapture(d) {
         .then((resPK) => {});
       if (document.querySelector("#handleCheckbox").checked) {
         const actDataAct = {
-          newDailyHours: 0,
-          newProjectHours: 0,
+          // newDailyHours: 0,
+          // newProjectHours: 0,
           endTime: new Date().getTime(),
           projectId: curProject._id,
           consumeTime: curProject.consumetimeCur,
@@ -831,8 +832,8 @@ async function handleCapture(t) {
       projectId: curProject._id,
       endTime: new Date().getTime(),
       consumeTime: curProject.consumetimeCur,
-      newProjectHours: !isInternal ? curProject.consumetimeCur : 0,
-      newDailyHours: curProject.consumetimeCur,
+      // newProjectHours: !isInternal ? curProject.consumetimeCur : 0,
+      // newDailyHours: curProject.consumetimeCur,
       performanceData:
         Math.round(
           (100 - (currActIdleTime / curProject.consumetimeCur) * 100) * 100
