@@ -24,14 +24,20 @@ ipcRenderer.on("token", async (evt, message) => {
     settings = data.user.settings;
     loadSettings();
     commonDataInterval(true);
+    document.getElementById("login-loader").style = "display: none";
     document.getElementById("login-details").style = "display:none";
     document.getElementById("main-details").style =
       "display: block; margin: 15px;margin-top: 0px;";
     document.getElementById("footer").style = "display: block";
-    document.getElementById("user-name").innerHTML = data.user.firstName;
+    document.getElementById(
+      "user-name"
+    ).innerHTML = `${data?.user?.firstName} ${data?.user?.lastName}`;
     document.getElementById("task-details").style = "display: block";
 
     callProjects();
+  } else {
+    document.getElementById("login-loader").style = "display: none";
+    document.getElementById("login-details").style = "display: block";
   }
 });
 
@@ -256,7 +262,7 @@ async function selectProject(idx) {
     document.getElementById("hClientName").innerHTML = curProject.client.name;
     // userClientsD[curProject.client]["name"];
     // document.getElementById("hProjectDesc").innerHTML = curProject.description;
-    document.getElementById("hProjectDesc").innerHTML = "SOME DESCRIPTION";
+    document.getElementById("hProjectDesc").innerHTML = "";
     document.getElementById("hDayOfWeek").innerHTML =
       daysSort[new Date().getDay()];
     document.getElementById("hConsumeTime").innerHTML = tm + " hrs";
@@ -447,6 +453,9 @@ function commonDataInterval(d) {
         }
       );
       loadTime(data);
+      // to update settings if changed from site.
+      settings = data.user.settings;
+      loadSettings();
     }, 60000);
   } else {
     clearInterval(cdInt);
@@ -543,8 +552,9 @@ btn.addEventListener("click", (e) => {
         document.getElementById("main-details").style =
           "display: block; margin: 15px;margin-top: 0px;";
         document.getElementById("footer").style = "display: block";
-        document.getElementById("user-name").innerHTML =
-          res.data.user.firstName;
+        document.getElementById(
+          "user-name"
+        ).innerHTML = `${res?.data?.user?.firstName} ${res?.data?.user?.lastName}`;
         document.getElementById("task-details").style = "display: block";
       }
       callProjects();
@@ -1028,21 +1038,19 @@ if (!fs.existsSync(dir)) {
 
 function eventHandler(event) {}
 
-function logout() {
-  location.reload();
-  commonDataInterval(false);
-}
-``;
-
 // search functionality.
 const search = document.getElementById("search");
 let search_term = "";
 
 const showList = () => {
   const newData = userProjects.filter((item) => {
+    console.log(
+      item.name.toLowerCase().includes(search_term) ||
+        item.client?.name.toLowerCase().includes(search_term)
+    );
     return (
       item.name.toLowerCase().includes(search_term) ||
-      item.client.name.toLowerCase().includes(search_term)
+      item.client?.name.toLowerCase().includes(search_term)
     );
   });
   renderProjects(newData);
@@ -1052,3 +1060,63 @@ search.addEventListener("input", (event) => {
   search_term = event.target.value.toLowerCase();
   showList();
 });
+
+function logout() {
+  // location.reload();
+  if (running) {
+    document.querySelector("#handleCheckbox").click();
+  }
+  commonDataInterval(false);
+  ipcRenderer.send("delete-token");
+  settings = 0;
+  running = false;
+  isInternal = false;
+  currSsTimer = 0;
+  curUserID = 0;
+  curProjectID = 0;
+  curClientId = 0;
+  curTaskID = 0;
+  curProjectS;
+  curProjectIDS;
+  curClientIdS;
+  userProjects = [];
+  curActivity = new Date().getTime();
+  curActivityId = "";
+  performanceData = 100;
+  avgPerformance = 100;
+  ppp = 0;
+  userData = {};
+  curProject = {};
+  daysFull = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+  daysSort = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  sstime = 600000;
+  apause = 5;
+
+  lastCaptured = "";
+  gggc = 1;
+  timmer = 0;
+  intVaal = 0;
+  intCapt = 0;
+
+  reqHeaders = {
+    Authorization: "Bearer ",
+  };
+
+  mediaRecorder;
+  document.getElementById("login-loader").style = "display: none";
+  document.getElementById("login-details").style = "display: block";
+
+  document.getElementById("main-details").style = "display: none";
+  document.getElementById("footer").style = "display: none";
+  document.getElementById("user-name").innerHTML = "";
+  document.getElementById("task-details").style = "display: none";
+}

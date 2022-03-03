@@ -60,6 +60,10 @@ app.whenReady().then(() => {
 ipcMain.on("set-token", (e, m) => {
   keytar.setPassword("Meru", "Ayushg", m);
 });
+ipcMain.on("delete-token", (e, m) => {
+  keytar.deletePassword("Meru", "Ayushg");
+  win.webContents.send("show-login");
+});
 // idle ///////////////////////////////////
 let isIdle;
 let idleCheck = null;
