@@ -6,6 +6,7 @@ const {
   ipcMain,
 } = require("electron");
 var fs = require("fs");
+const keytar = require("keytar");
 
 // dev/prod
 process.env.NODE_ENV = "development";
@@ -50,8 +51,15 @@ function createWindow() {
 
 app.whenReady().then(() => {
   createWindow();
+  win.webContents.once("dom-ready", async () => {
+    const webToken = await keytar.getPassword("Meru", "Ayushg");
+    console.log(webToken);
+    win.webContents.send("token", webToken);
+  });
 });
-
+ipcMain.on("set-token", (e, m) => {
+  keytar.setPassword("Meru", "Ayushg", m);
+});
 // idle ///////////////////////////////////
 let isIdle;
 let idleCheck = null;

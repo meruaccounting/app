@@ -5,6 +5,35 @@ const mergeImg = require("merge-img");
 const Jimp = require("jimp");
 const util = require("util");
 const electron = require("electron");
+const keytar = require("keytar");
+
+ipcRenderer.on("token", async (evt, message) => {
+  console.log(message); // Returns: {'SAVED': 'File Saved'}
+  if (message) {
+    reqHeaders["Authorization"] = "Bearer " + message;
+    console.log(reqHeaders);
+    const { data } = await axios.post(
+      ep + `commondata`,
+      {},
+      {
+        headers: reqHeaders,
+      }
+    );
+    console.log(data);
+    loadTime(data);
+    settings = data.user.settings;
+    loadSettings();
+    commonDataInterval(true);
+    document.getElementById("login-details").style = "display:none";
+    document.getElementById("main-details").style =
+      "display: block; margin: 15px;margin-top: 0px;";
+    document.getElementById("footer").style = "display: block";
+    document.getElementById("user-name").innerHTML = data.user.firstName;
+    document.getElementById("task-details").style = "display: block";
+
+    callProjects();
+  }
+});
 
 //////////////////
 // Importing powerMonitor from Main Process
@@ -494,6 +523,7 @@ btn.addEventListener("click", (e) => {
         // curUserID = res.userData._id;
         reqHeaders["Authorization"] = "Bearer " + res.data.token;
         console.log(reqHeaders);
+        ipcRenderer.send("set-token", res.data.token);
         // // getcommondata for settings
         const { data } = await axios.post(
           ep + `commondata`,
