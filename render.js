@@ -12,29 +12,34 @@ ipcRenderer.on("token", async (evt, message) => {
   if (message) {
     reqHeaders["Authorization"] = "Bearer " + message;
     console.log(reqHeaders);
-    const { data } = await axios.post(
-      ep + `commondata`,
-      {},
-      {
-        headers: reqHeaders,
-      }
-    );
-    console.log(data);
-    loadTime(data);
-    settings = data.user.settings;
-    loadSettings();
-    commonDataInterval(true);
-    document.getElementById("login-loader").style = "display: none";
-    document.getElementById("login-details").style = "display:none";
-    document.getElementById("main-details").style =
-      "display: block; margin: 15px;margin-top: 0px;";
-    document.getElementById("footer").style = "display: block";
-    document.getElementById(
-      "user-name"
-    ).innerHTML = `${data?.user?.firstName} ${data?.user?.lastName}`;
-    document.getElementById("task-details").style = "display: block";
+    try {
+      const { data } = await axios.post(
+        ep + `commondata`,
+        {},
+        {
+          headers: reqHeaders,
+        }
+      );
+      console.log(data);
+      loadTime(data);
+      settings = data.user.settings;
+      loadSettings();
+      commonDataInterval(true);
+      document.getElementById("login-loader").style = "display: none";
+      document.getElementById("login-details").style = "display:none";
+      document.getElementById("main-details").style =
+        "display: block; margin: 15px;margin-top: 0px;";
+      document.getElementById("footer").style = "display: block";
+      document.getElementById(
+        "user-name"
+      ).innerHTML = `${data?.user?.firstName} ${data?.user?.lastName}`;
+      document.getElementById("task-details").style = "display: block";
 
-    callProjects();
+      callProjects();
+    } catch (error) {
+      document.getElementById("login-loader").style = "display: none";
+      document.getElementById("login-details").style = "display: block";
+    }
   } else {
     document.getElementById("login-loader").style = "display: none";
     document.getElementById("login-details").style = "display: block";
@@ -687,8 +692,8 @@ async function doCapture(d) {
         clientId: curProject.client._id,
         consumeTime: currSsTimer,
         // task: curTaskID,
-        // image: resP.data.path,
-        image: "https://i.ibb.co/dt49XwW/image-1641720419332.png",
+        image: resP.data.path,
+        // image: "https://i.ibb.co/dt49XwW/image-1641720419332.png",
         activityAt: new Date().getTime(),
         // activity: curActivity,
         activityId: curActivityId,
@@ -701,6 +706,7 @@ async function doCapture(d) {
           headers: reqHeaders,
         })
         .then((resPK) => {});
+      // update the activity details with every ss if act running
       if (document.querySelector("#handleCheckbox").checked) {
         const actDataAct = {
           // newDailyHours: 0,
